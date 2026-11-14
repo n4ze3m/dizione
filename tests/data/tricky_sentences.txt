@@ -1,0 +1,416 @@
+# Tricky sentences for the phonemizer (front end "own").
+#
+# TEXT   what the user types
+# SAID   the words the normaliser must turn it into. Punctuation marks stand
+#        alone; [A M] is read letter by letter; +word continues the word before
+#        it (no word boundary); {...} is a pronunciation given inline.
+# PHONES optional: a stretch of the token sequence that must appear, phones
+#        separated by spaces, stress marked ˈ ˌ, <sp> between words.
+#
+# tests/test_phonemizer.py checks every block. Add a block for every bug fixed.
+
+# ---- the a greeting with a name ----
+TEXT: Hello Samir, how are you?
+SAID: hello samir , how are you ?
+PHONES: h ə l ˈoʊ <sp> s ə m ˈɪɹ , h ˈaʊ <sp> ɑːɹ <sp> j uː ?
+
+# ---- money ----
+TEXT: It costs $3.14, including tax.
+SAID: it costs three dollars and fourteen cents , including tax .
+TEXT: She paid $1,250.50 for it.
+SAID: she paid one thousand two hundred fifty dollars and fifty cents for it .
+TEXT: That's $5 only.
+SAID: that's five dollars only .
+TEXT: A $2.5 million deal and a $10k bonus.
+SAID: a two point five million dollars deal and a ten thousand dollars bonus .
+TEXT: Only $0.99 today!
+SAID: only ninety nine cents today !
+TEXT: He owes me £20 and €1.
+SAID: he owes me twenty pounds and one euro .
+TEXT: 1 dollar, $1, $1.01, $2.00, $100.
+SAID: one dollar , one dollar , one dollar and one cent , two dollars , one hundred dollars .
+
+# ---- times ----
+TEXT: I woke up at 3:45 and left at 4:00.
+SAID: i woke up at three forty five and left at four o'clock .
+TEXT: Meet me at 3:45 PM or 10:30am.
+SAID: meet me at three forty five [P M] or ten thirty [A M] .
+TEXT: The store closes at 8 p.m. on Friday.
+SAID: the store closes at eight [P M] on friday .
+TEXT: The store closes at 8 p.m.
+SAID: the store closes at eight [P M] .
+TEXT: We left at 7 a.m. The sun was up.
+SAID: we left at seven [A M] . the sun was up .
+TEXT: It's 5 o'clock.
+SAID: it's five o'clock .
+TEXT: I am happy. Am I right?
+SAID: i am happy . am i right ?
+
+# ---- dates and years ----
+TEXT: On 12/09/2026 we met.
+SAID: on december ninth twenty twenty six we met .
+TEXT: The date is 2026-11-14.
+SAID: the date is november fourteenth twenty twenty six .
+TEXT: Born on January 5, 1990 in Boston.
+SAID: born on january fifth nineteen ninety in boston .
+TEXT: 7 November 2026 was a Saturday.
+SAID: the seventh of november twenty twenty six was a saturday .
+TEXT: It was built in 1681 and rebuilt in 2005.
+SAID: it was built in sixteen eighty one and rebuilt in two thousand five .
+TEXT: In 2026 there were 2026 apples.
+SAID: in twenty twenty six there were two thousand twenty six apples .
+TEXT: The year 2000 and 1905 and 2010.
+SAID: the year two thousand and nineteen oh five and twenty ten .
+TEXT: The 1990s and the '80s.
+SAID: the nineteen nineties and the eighties .
+TEXT: From 2019-2021 it grew.
+SAID: from twenty nineteen to twenty twenty one it grew .
+TEXT: Mon. to Fri., Jan. 5 to Dec. 25.
+SAID: monday to friday , january fifth to december twenty fifth .
+
+# ---- numbers ----
+TEXT: I have 1,234,567 points and 3.14159 radians.
+SAID: i have one million two hundred thirty four thousand five hundred sixty seven points and three point one four one five nine radians .
+TEXT: The 1st, 2nd, 3rd, 11th, 22nd and 101st.
+SAID: the first , second , third , eleventh , twenty second and one hundred first .
+TEXT: The 4th of July, the 21st, and the 3rd.
+SAID: the fourth of july , the twenty first , and the third .
+TEXT: It costs 100,000 or 0.5 or .75 percent.
+SAID: it costs one hundred thousand or zero point five or point seven five percent .
+TEXT: About 45% of 200 people.
+SAID: about forty five percent of two hundred people .
+TEXT: Add 1/2 cup and 3/4 teaspoon.
+SAID: add one half cup and three quarters teaspoon .
+TEXT: It is open 24/7.
+SAID: it is open twenty four seven .
+TEXT: Score was 3-2. A 50/50 chance.
+SAID: score was three to two . a fifty fifty chance .
+TEXT: Temperature: -5 degrees, +3 tomorrow.
+SAID: temperature : minus five degrees , plus three tomorrow .
+TEXT: Version 2.0.1 and iOS 18.
+SAID: version two point zero point one and [I O S] eighteen .
+TEXT: I read 3 books in 2 days.
+SAID: i read three books in two days .
+TEXT: A 5-year plan and a 20-minute walk.
+SAID: a five year plan and a twenty minute walk .
+TEXT: Twenty-five people came.
+SAID: twenty +five people came .
+
+# ---- telephone numbers ----
+TEXT: Call 1-800-555-0147 now.
+SAID: call one , eight hundred , five five five , oh one four seven now .
+TEXT: My number is (415) 555-2671.
+SAID: my number is four one five , five five five , two six seven one .
+TEXT: Call +1 415 555 2671 or 555-0147.
+SAID: call one , four one five , five five five , two six seven one or five five five , oh one four seven .
+
+# ---- units ----
+TEXT: The range is 10-15 km.
+SAID: the range is ten to fifteen kilometers .
+TEXT: It weighs 5kg and runs at 60 mph.
+SAID: it weighs five kilograms and runs at sixty miles per hour .
+TEXT: It is 72°F outside.
+SAID: it is seventy two degrees fahrenheit outside .
+TEXT: He weighs 80kg; it is -3°C.
+SAID: he weighs eighty kilograms ; it is minus three degrees celsius .
+TEXT: He is 6 ft tall and ran 5 mi.
+SAID: he is six feet tall and ran five miles .
+TEXT: The file is 20MB and 3 GB.
+SAID: the file is twenty megabytes and three gigabytes .
+
+# ---- abbreviations ----
+TEXT: Dr. Smith lives on Elm St. near St. Paul.
+SAID: doctor smith lives on elm street near saint paul .
+TEXT: Mr. and Mrs. Jones met Prof. Lee.
+SAID: mister and mrs jones met professor lee .
+PHONES: m ˈɪ s t ɚ <sp> æ n d <sp> m ˈɪ s ɪ z <sp> dʒ ˈoʊ n z
+TEXT: See p. 12 and No. 5.
+SAID: see page twelve and number five .
+TEXT: e.g. apples, i.e. fruit, etc.
+SAID: for example apples , that is fruit , et cetera .
+TEXT: I live at 10 Downing St. in London.
+SAID: i live at ten downing street in london .
+TEXT: St. Louis is on Main St.
+SAID: saint louis is on main street .
+TEXT: Dr. Okafor's office is at 3 p.m. today.
+SAID: doctor okafor's office is at three [P M] today .
+
+# ---- initialisms, capitals, letters ----
+TEXT: The U.S. and the U.K. agreed.
+SAID: the [U S] and the [U K] agreed .
+PHONES: ð ə <sp> j ˌuː ˈɛ s <sp> æ n d
+TEXT: He lives in the U.S. It is big.
+SAID: he lives in the [U S] . it is big .
+TEXT: I work in IT at IBM.
+SAID: i work in [I T] at ibm .
+TEXT: THIS IS VERY IMPORTANT.
+SAID: this is very important .
+TEXT: H. C. Sirr wrote it.
+SAID: [H] . [C] . sirr wrote it .
+TEXT: COVID-19 and B2B sales at 4K.
+SAID: covid nineteen and [B] two [B] sales at four [K] .
+TEXT: Henry VIII and World War II.
+SAID: henry the eighth and world war two .
+TEXT: x = 5 and y < 10
+SAID: [X] equals five and [Y] less than ten
+
+# ---- chat text: never read as words, never a pause ----
+TEXT: lol that was funny :))
+SAID: [L O L] that was funny
+PHONES: ˌɛ l ˌoʊ ˈɛ l <sp> ð æ t
+TEXT: omg btw idk what u mean :-) <3
+SAID: [O M G] by the way i don't know what you mean
+TEXT: See you soon :D
+SAID: see you soon
+TEXT: :) Hello :( bye ;) ok :P fine :-D yes ^_^ no <3
+SAID: hello bye okay fine yes no
+TEXT: 🙂 Great job 👍🎉
+SAID: great job
+TEXT: soooo goooood, yesss!!! tooo much, alll of it, heyyy
+SAID: so good , yes ! ! ! too much , all of it , hey
+TEXT: Is it OK? ok then. U r gr8!
+SAID: is it okay ? okay then . [U] are great !
+TEXT: Read the FAQ, ASAP!
+SAID: read the [F A Q] , [A S A P] !
+
+# ---- symbols and addresses ----
+TEXT: Tom & Jerry + friends = fun.
+SAID: tom and jerry plus friends equals fun .
+TEXT: #1 hit and #winning
+SAID: number one hit and hashtag winning
+TEXT: 3 x 4 = 12 and 10 ÷ 2
+SAID: three times four equals twelve and ten divided by two
+TEXT: Email me at samir@example.com please.
+SAID: email me at samir at example dot com please .
+TEXT: Visit https://example.com/docs today.
+SAID: visit example dot com slash docs today .
+
+# ---- punctuation, hyphens, apostrophes ----
+TEXT: It's a well-known, state-of-the-art thing.
+SAID: it's a well +known , state +of +the +art thing .
+TEXT: Wait... what?! No way -- really?
+SAID: wait … what ? ! no way — really ?
+TEXT: (aside) [note] the end.
+SAID: ( aside ) ( note ) the end .
+TEXT: He said "'tis the season" and 'em too.
+SAID: he said " 'tis the season " and 'em too .
+TEXT: The boys' toys and Tom's cat.
+SAID: the boys ' toys and tom's cat .
+TEXT: I'll, we'd, they've, o'clock, y'all, ma'am.
+SAID: i'll , we'd , they've , o'clock , y'all , ma'am .
+TEXT: Rock 'n' roll at 9am.
+SAID: rock 'n roll at nine [A M] .
+
+# ---- accents, single letters ----
+TEXT: The café serves a naïve crème brûlée, déjà vu.
+SAID: the cafe serves a naive creme brulee , deja vu .
+TEXT: Send me your résumé, then resume work.
+PHONES: ɹ ˈɛ z ə m ˌeɪ ,
+PHONES: ɹ ᵻ z ˈuː m <sp> w ˈɜː k
+TEXT: We chose Plan A. A dog barked.
+SAID: we chose plan [A] . a dog barked .
+TEXT: In the 1990's we used ½ of it.
+SAID: in the nineteen nineties we used one half of it .
+
+# ---- pronunciation given inline ----
+TEXT: Say {HH AH0 L OW1} to Samir{S AH0 M IH1 R}.
+SAID: say {h ə l oʊ} to {s ə m ɪɹ} .
+PHONES: s ˈeɪ <sp> h ə l ˈoʊ <sp> t ə <sp> s ə m ˈɪɹ .
+TEXT: Say {h ə l ˈoʊ} now.
+SAID: say {h ə l oʊ} now .
+
+# ---- homographs ----
+TEXT: I will read it tomorrow.
+PHONES: ɹ ˈiː d
+TEXT: She has read every page.
+PHONES: ɹ ˈɛ d
+TEXT: Did you read my message?
+PHONES: ɹ ˈiː d
+TEXT: I have not read it yet.
+PHONES: ɹ ˈɛ d
+TEXT: They live in Seattle.
+PHONES: l ˈɪ v
+TEXT: We saw a live show last night.
+PHONES: l ˈaɪ v
+TEXT: Use the red button.
+PHONES: j ˈuː z
+TEXT: What is the use of that?
+PHONES: j ˈuː s
+TEXT: Close the door, please.
+PHONES: k l ˈoʊ z
+TEXT: We were so close to winning.
+PHONES: k l ˈoʊ s
+TEXT: The wind is strong today.
+PHONES: w ˈɪ n d
+TEXT: Wind the clock before you leave.
+PHONES: w ˈaɪ n d
+TEXT: Lead the way.
+PHONES: l ˈiː d
+TEXT: The pipe is made of lead.
+PHONES: l ˈɛ d
+TEXT: A tear rolled down his cheek.
+PHONES: t ˈɪɹ
+TEXT: Do not tear the paper.
+PHONES: t ˈɛɹ
+TEXT: Record a message after the beep.
+PHONES: ɹ ᵻ k ˈɔːɹ d
+TEXT: She broke the world record.
+PHONES: ɹ ˈɛ k ɚ d
+TEXT: I will present the results on Monday.
+PHONES: p ɹ ᵻ z ˈɛ n t
+TEXT: He gave me a present.
+PHONES: p ɹ ˈɛ z ə n t
+TEXT: Wait a minute.
+PHONES: m ˈɪ n ɪ t
+TEXT: The details are minute.
+PHONES: m aɪ n ˈuː t
+TEXT: He caught a huge bass.
+PHONES: b ˈæ s
+TEXT: The bass guitar sounds great.
+PHONES: b ˈeɪ s
+TEXT: Take a bow.
+PHONES: b ˈaʊ
+TEXT: She tied a bow in her hair.
+PHONES: b ˈoʊ
+
+# ---- sounds the dictionary does not write: flap, glottal stop, syllabic l and n, r ----
+TEXT: The water in the little bottle is better.
+PHONES: w ˈɔː ɾ ɚ
+PHONES: l ˈɪ ɾ əl <sp> b ˈɑː ɾ əl
+PHONES: b ˈɛ ɾ ɚ
+TEXT: Press the button; it is certain.
+PHONES: b ˈʌ ʔ n̩
+PHONES: s ˈɜː ʔ n̩
+TEXT: For more, see the door or the car.
+PHONES: f ɔːɹ <sp> m ˈoːɹ
+PHONES: d ˈoːɹ
+PHONES: k ˈɑːɹ
+TEXT: Pour it over ice and stir.
+PHONES: p ˈoː ɹ <sp> ɪ ɾ <sp> ˌoʊ v ɚ ɹ <sp> ˈaɪ s
+TEXT: The apple, the orange and the pear.
+PHONES: ð ɪ <sp> ˈæ p əl , ð ɪ <sp> ˈɔː ɹ ɪ n dʒ <sp> æ n d <sp> ð ə <sp> p ˈɛɹ
+TEXT: I want to eat, and to go.
+PHONES: t ʊ <sp> ˈiː t
+PHONES: t ə <sp> ɡ ˈoʊ
+
+# ---- unknown words go to the model: they must come out as phones, not letters ----
+TEXT: Gwynplaine met Barkilphedro at Clancharlie.
+TEXT: The flurbish zentrix quorped loudly.
+
+# ---- version numbers ----
+TEXT: Please install v2.4.1, not v2.3.1.
+SAID: please install [V] two point four point one , not [V] two point three point one .
+TEXT: Python 3.12 and Ubuntu 24.04 are supported.
+SAID: python three point twelve and ubuntu twenty four point oh four are supported .
+TEXT: Build 10.0.19045 runs kernel 6.5.0-14.
+SAID: build ten point zero point one nine zero four five runs kernel six point five point zero dash fourteen .
+
+# ---- web addresses and file names ----
+TEXT: The guide is at gradium.sh/docs.
+SAID: the guide is at gradium dot [S H] slash docs .
+TEXT: I saved it as sales_2026-Q3.xlsx yesterday.
+SAID: i saved it as sales underscore twenty twenty six dash [Q] three dot [X L S X] yesterday .
+TEXT: Open notes.txt, then run build.sh and read error.log.
+SAID: open notes dot [T X T] , then run build dot [S H] and read error dot log .
+TEXT: Write to help@shop.example.co.uk.
+SAID: write to help at shop dot example dot co dot [U K] .
+TEXT: I went to the end.Then I stopped.
+SAID: i went to the end . then i stopped .
+
+# ---- day and month without a year ----
+TEXT: It was delivered on 12/10.
+SAID: it was delivered on december tenth .
+TEXT: We meet on 14/03 and again on 12/10.
+SAID: we meet on march fourteenth and again on october twelfth .
+TEXT: Open from 01/07 to 30/09.
+SAID: open from july first to september thirtieth .
+TEXT: Use 3/4 of it, about 7/10 of a cup.
+SAID: use three quarters of it , about seven tenths of a cup .
+TEXT: The deadline is 15.11.2026.
+SAID: the deadline is november fifteenth twenty twenty six .
+TEXT: It runs 3-17 November.
+SAID: it runs the third to the seventeenth of november .
+TEXT: She arrives on 22 February.
+SAID: she arrives on the twenty second of february .
+
+# ---- mixed fractions ----
+TEXT: Add 1½ cups, then wait 2¾ hours.
+SAID: add one and a half cups , then wait two and three quarters hours .
+TEXT: It is 2 1/2 miles away.
+SAID: it is two and a half miles away .
+
+# ---- symbols that used to be dropped ----
+TEXT: Use a value ≥ 5 and ≤ 10, where x ≠ y and pi ≈ 3.14.
+SAID: use a value greater than or equal to five and less than or equal to ten , where [X] not equal to [Y] and pi approximately three point one four .
+TEXT: The plot is 120 m² and 7 − 3 = 4.
+SAID: the plot is one hundred twenty square meters and seven minus three equals four .
+TEXT: It costs 50¢ or -€12.50.
+SAID: it costs fifty cents or minus twelve euros and fifty cents .
+
+# ---- product names in mixed case ----
+TEXT: iOS and macOS run on the iPhone and the iPad.
+SAID: [I O S] and mac +[O S] run on the iphone and the ipad .
+PHONES: ˌaɪ ˌoʊ ˈɛ s <sp> æ n d
+TEXT: I found it on eBay and YouTube.
+SAID: i found it on ebay and youtube .
+
+# ---- a single letter in a code is the letter, never the article ----
+TEXT: Ticket #A7-4419 and plate KT-738-RP.
+SAID: ticket number [A] seven , four four one nine and plate [K T] , seven three eight , [R P] .
+TEXT: Gate A7, seat 14C, row B12.
+SAID: gate [A] seven , seat fourteen [C] , row [B] twelve .
+PHONES: ɡ ˈeɪ t <sp> ˈeɪ <sp> s ˈɛ v ə n
+
+# ---- digit strings and grouped codes: digit by digit, a break between groups ----
+TEXT: The card number is 4502 1187 3390 2.
+SAID: the card number is four five zero two , one one eight seven , three three nine zero , two .
+TEXT: Quote 91-220-0017 or CS-2026-0813.
+SAID: quote nine one , two two zero , zero zero one seven or [C S] , two zero two six , zero eight one three .
+TEXT: Order 48213907 has shipped; your PIN is 4471.
+SAID: order four eight two one three nine zero seven has shipped ; your pin is four four seven one .
+TEXT: Call 020 7946 0018 or dial 999.
+SAID: call oh two oh , seven nine four six , oh oh one eight or dial nine nine nine .
+TEXT: There were 1500000 people and 10 000 chairs.
+SAID: there were one million five hundred thousand people and ten thousand chairs .
+TEXT: Use code SAVE-20 on the RTX 4070 Ti.
+SAID: use code save twenty on the [R T X] forty seventy [T I] .
+
+# ---- number signs ----
+TEXT: Bug #2093 is fixed and order #A7 has shipped.
+SAID: bug number two zero nine three is fixed and order number [A] seven has shipped .
+
+# ---- lengths of time, the 24-hour clock, ratios ----
+TEXT: The run took 2:03:45.
+SAID: the run took two hours , three minutes and forty five seconds .
+TEXT: Open 14:00-16:00, closed after 20:00.
+SAID: open fourteen hundred to sixteen hundred , closed after twenty hundred .
+TEXT: The call is at 4 p.m. ET or 7.30 pm.
+SAID: the call is at four [P M] [E T] or seven thirty [P M] .
+TEXT: The ratio is 16:9 on a 1:25,000 map.
+SAID: the ratio is sixteen to nine on a one to twenty five thousand map .
+
+# ---- more units and abbreviations ----
+TEXT: The room is 3.5 m by 4 m; add 2 tsp and wait 30 min. more.
+SAID: the room is three point five meters by four meters ; add two teaspoons and wait thirty minutes more .
+TEXT: Delivery Mon.-Fri., see the ref. no. on the 3rd fl.
+SAID: delivery monday to friday , see the reference number on the third floor .
+TEXT: The max. load is listed; the est. time is short.
+SAID: the maximum load is listed ; the estimated time is short .
+
+# ---- taught words: data/exceptions.txt ----
+TEXT: Tung Tung Tung Sahur
+SAID: tung tung tung sahur
+PHONES: t ˈuː ŋ <sp> t ˌuː ŋ <sp> t ˌuː ŋ <sp> s ɑː h ˈʊɹ
+TEXT: No cap, that skibidi rizz is lowkey bussin, ngl.
+SAID: no cap , that skibidi rizz is lowkey bussin , not gonna lie .
+PHONES: s k ˈɪ b ɪ d i <sp> ɹ ˈɪ z
+TEXT: Tralalero Tralala met Bombardiro Crocodilo.
+PHONES: t ɹ ˌɑː l ə l ˈɛ ɹ oʊ <sp> t ɹ ˌɑː l ə l ˈɑː
+TEXT: Fr. Brown said it, fr.
+SAID: father brown said it , for real .
+
+# ---- "A" after a sentence end is the article; an initial is a letter ----
+TEXT: We made a plan. A dog barked.
+SAID: we made a plan . a dog barked .
+TEXT: F. A. McKenzie wrote it.
+SAID: [F] . [A] . mckenzie wrote it .
