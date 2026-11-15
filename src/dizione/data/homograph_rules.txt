@@ -12,7 +12,9 @@
 #   next: ...    the word just after is one of these; </s> = end of sentence
 #   near: ...    one of these occurs within six words
 #   first        the word opens the sentence
+#   joined: ...  a hyphen joins the word to one of these before it ("well-read")
 
+read     past      joined: well widely best better most least little much oft often rarely seldom never half un
 read     past      aux: have has had having haven't hasn't hadn't was were been being is are be am got
 read     present   aux: to will would can could should shall may might must do does did don't doesn't didn't let let's please cannot can't won't wouldn't couldn't shouldn't
 read     present   first

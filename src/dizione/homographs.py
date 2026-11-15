@@ -123,16 +123,18 @@ def read_rules(source="homograph_rules.txt"):
         conditions = []
         for part in columns[2].split(";"):
             name, _, words = part.strip().partition(":")
-            if name not in ("aux", "before", "next", "near", "first") or (name == "first") == bool(words.strip()):
+            if name not in ("aux", "before", "next", "near", "first", "joined") or (name == "first") == bool(words.strip()):
                 raise ValueError(f"homograph_rules.txt line {number}: bad condition {part.strip()!r}")
             conditions.append((name, frozenset(words.split())))
         rules.setdefault(columns[0], []).append((columns[1], conditions))
     return rules
 
 
-def _holds(condition, words, tokens, index):
+def _holds(condition, words, tokens, index, joined=False):
     if condition == "first":
         return index == 0
+    if condition == "joined":
+        return joined and index > 0 and tokens[index - 1].lower() in words
     if condition == "aux":
         return _left(tokens, index, _SKIP_FOR_AUX) in words
     if condition == "before":
@@ -162,15 +164,16 @@ class Homographs:
         """True for a homograph and for the regular -s form of a noun-or-verb one."""
         return word in self.words or (word.endswith("s") and word[:-1] in self.plural_bases)
 
-    def pronounce(self, word, tokens, index):
-        """``(phones as text, needs the -s ending)`` for ``tokens[index]``."""
+    def pronounce(self, word, tokens, index, joined=False):
+        """``(phones as text, needs the -s ending)`` for ``tokens[index]``.
+        ``joined`` says a hyphen joins the word to the one before it."""
         if word in self.words:
-            return self.choose(word, tokens, index)["phones"], False
+            return self.choose(word, tokens, index, joined)["phones"], False
         entry = self.words[word[:-1]]
         adjective = next((sense for sense in entry["senses"] if sense["role"] == "n"), None)
         if adjective and adjective["id"] == "adj":                 # "separates" can only be the verb
             return next(sense for sense in entry["senses"] if sense["role"] == "v")["phones"], True
-        return self.choose(word[:-1], tokens, index)["phones"], True
+        return self.choose(word[:-1], tokens, index, joined)["phones"], True
 
     def scores(self, word, tokens, index):
         """Score of every sense of ``word`` (higher is more likely)."""
@@ -183,13 +186,13 @@ class Homographs:
             return [verb if sense["role"] == "v" else -verb for sense in entry["senses"]]
         return [bias + sum(weights.get(name, 0.0) for name in names) for bias, weights in zip(model["bias"], model["weights"])]
 
-    def choose(self, word, tokens, index):
+    def choose(self, word, tokens, index, joined=False):
         """The sense meant by ``tokens[index]``: ``{"id", "role", "phones"}``.
         Hand rules first, then the classifier."""
         entry = self.words[word]
         sentence, position = sentence_of(tokens, index)
         for sense, conditions in self.rules.get(word, ()):
-            if all(_holds(name, words, sentence, position) for name, words in conditions):
+            if all(_holds(name, words, sentence, position, joined) for name, words in conditions):
                 return next(s for s in entry["senses"] if s["id"] == sense)
         scores = self.scores(word, tokens, index)
         return entry["senses"][max(range(len(scores)), key=scores.__getitem__)]

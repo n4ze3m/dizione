@@ -104,6 +104,11 @@ def _secondary(phones):
     return tuple((phone, 2 if stress == 1 else stress) for phone, stress in phones)
 
 
+def compound(first, second):
+    """Two words said as one: the second keeps only a lesser stress ("sandpiper")."""
+    return join(first, _secondary(second))
+
+
 def derive(word, lookup, part=None, depth=0):
     """Pronunciation of ``word`` from a shorter dictionary word, or ``None``.
 
@@ -199,5 +204,5 @@ def derive(word, lookup, part=None, depth=0):
                 if best is None or score > best[0]:
                     best = (score, left, right)
         if best:
-            return join(best[1], _secondary(best[2]))
+            return compound(best[1], best[2])
     return None

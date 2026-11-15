@@ -65,6 +65,8 @@ _SYMBOL_WORDS = {"&": "and", "@": "at", "+": "plus", "=": "equals", "%": "percen
 _COMPARISONS = {">=": "greater than or equal to", "<=": "less than or equal to", "!=": "not equal to"}
 # Capitals read letter by letter although they also spell a word.
 _INITIALISMS = frozenset("US IT AI ID UN EU UK LA AD BC AM PM OS PE PA MA LED SAT RIP ER".split())
+# Always letters in capitals, also in a text typed in capitals: in small letters they are a hiss and a snore.
+_LETTER_CAPITALS = frozenset(("SS", "ZZ"))
 _SENTENCE_STARTERS = frozenset("the he she it i we they this that there but and in on at a an if when what why how who my our "
                                "you then so now after before however".split())
 _YEAR_CONTEXT = frozenset("in since by from until till before after during around circa of year early late mid summer winter "
@@ -120,7 +122,17 @@ _HALF_DAY = r"(?:\s?([AaPp])\.[Mm]\.?|\s?([AaPp])[Mm]\b)"
 _AMOUNT = r"(?P<whole>\d{1,3}(?:,\d{3})+|\d+)(?:\.(?P<fraction>\d+))?"
 _MONEY = re.compile(r"(?:(?<![\w.])(?P<minus>-)\s?)?(?P<symbol>[$£€¥₹]|(?<![A-Za-z])(?:" + _CURRENCY_CODES + r")(?![A-Za-z]))\s?"
                     r"(?P<inner>-)?" + _AMOUNT + r"(?:\s?(?P<scale>thousand|million|billion|trillion|bn|[kKmMbB])(?![A-Za-z]))?")
-_MONEY_AFTER = re.compile(r"(?<![\w.,])" + _AMOUNT + r"\s?(?P<symbol>" + _CURRENCY_CODES + r")(?![A-Za-z])")
+# A currency written after the amount: "20 €", "20€", "12.50 EUR".
+_SIGN_AFTER = r"[$£€¥₹](?![\w$£€¥₹])|(?:" + _CURRENCY_CODES + r")(?![A-Za-z])"
+_MONEY_AFTER = re.compile(r"(?:(?<![\w.])(?P<minus>-)\s?)?(?<![\w.,])" + _AMOUNT + r"\s?(?P<symbol>" + _SIGN_AFTER + r")")
+_RANGE_BEFORE_SIGN = re.compile(r"(?<![\w.,-])(\d[\d,]*(?:\.\d+)?)-(?=\d[\d,]*(?:\.\d+)?\s?(?:" + _SIGN_AFTER + r"))")
+# Figures written the continental way: a point between the thousands and a comma
+# before the decimals ("1.299,50"). Without the points a comma is a decimal
+# comma only next to a currency or a percent sign ("€12,50", "0,99 €", "3,5%")
+# or before a unit ("1,5 kg", see ``_decimal_comma``); "1,2 and 3" stays a list.
+_CONTINENTAL = re.compile(r"(?<![\w.,])([1-9]\d{0,2}(?:\.\d{3})+),(\d{1,2})(?!\d|[.,]\d)")
+_COMMA_AFTER_SIGN = re.compile(r"((?:[$£€¥₹]|(?<![A-Za-z])(?:" + _CURRENCY_CODES + r"))\s?-?\d+),(\d{1,2})(?!\d|[.,]\d)")
+_COMMA_BEFORE_SIGN = re.compile(r"(?<![\w.,])(\d+),(\d{1,2})(?=\s?(?:%|" + _SIGN_AFTER + r"))")
 _VULGAR = re.compile(r"(?<![\d.,/])(?:(\d+)\s?)?([½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅐⅛⅜⅝⅞⅑⅒])")
 _ADDRESS = re.compile(
     r"(?P<url>(?:https?://|www\.)[^\s<>\"']+)"
@@ -298,6 +310,12 @@ def _identifier(text, position):
     return "enter" if words[-1] == "enter" else None
 
 
+def _decimal_comma(text):
+    """"1,5" before a unit is one number: a comma with one or two digits after
+    it does not part thousands. "1,250" is left as it is."""
+    return text.replace(",", ".") if re.fullmatch(r"\d+,\d{1,2}", text) else text
+
+
 def _address_digits(text):
     """Digits inside a file name or an address: 3, 2026, 0412."""
     if len(text) <= 2 and not (len(text) == 2 and text[0] == "0"):
@@ -348,6 +366,14 @@ class Normalizer:
         if change and cent:
             parts.append(f"{cardinal(change)} {cent if change == 1 else cents}")
         return " and ".join(parts)
+
+    @staticmethod
+    def _continental(match):
+        """"1.299,50" as "1,299.50". Four groups that could be an internet address are left alone."""
+        groups = match.group(1).split(".")
+        if len(groups) == 4 and all(int(group) <= 255 for group in groups):
+            return match.group(0)
+        return ",".join(groups) + "." + match.group(2)
 
     def _money(self, match):
         found = match.groupdict()
@@ -522,7 +548,7 @@ class Normalizer:
         if names is None or (len(unit) == 1 and match.string[match.end(3):match.end(3) + 1] in ("-", "'", "/")):
             return match.group(0)
         one, many = names
-        value, upper = match.group(1), match.group(2)
+        value, upper = _decimal_comma(match.group(1)), match.group(2) and _decimal_comma(match.group(2))
         if upper:
             return f" {number_words(value)} to {number_words(upper)} {many} "
         return f" {number_words(value)} {one if value in ('1', '1.0') else many} "
@@ -532,7 +558,7 @@ class Normalizer:
         unit = match.group(2)
         one, many = {"in": ("inch", "inches")}.get(unit) or self.exact_units.get(unit) or self.units[unit]
         kind = "square" if match.group(3) in "²2" else "cubic"
-        return f" {number_words(match.group(1))} {kind} {one if match.group(1) in ('1', '1.0') else many} "
+        return f" {number_words(_decimal_comma(match.group(1)))} {kind} {one if match.group(1) in ('1', '1.0') else many} "
 
     def _counted(self, text, end):
         """True when a plural noun follows a number: it is then an amount, not a reference."""
@@ -843,7 +869,12 @@ class Normalizer:
     def _figures(self, text):
         """The passes that need a digit: money, times, dates, telephone numbers,
         versions, codes, units, fractions, ranges."""
+        # continental figures become American ones, so every rule below sees one notation
+        text = _CONTINENTAL.sub(self._continental, text)
+        text = _COMMA_AFTER_SIGN.sub(r"\1.\2", text)
+        text = _COMMA_BEFORE_SIGN.sub(r"\1.\2", text)
         text = _MONEY.sub(self._money, text)
+        text = _RANGE_BEFORE_SIGN.sub(r"\1 to ", text)                      # 5-10 €
         text = _MONEY_AFTER.sub(self._money, text)
         text = re.sub(r"(?<![\w.])(\d[\d,]*(?:\.\d+)?)\s?¢",
                       lambda m: f" {number_words(m.group(1))} {'cent' if m.group(1) == '1' else 'cents'} ", text)
@@ -945,7 +976,9 @@ class Normalizer:
         """Spellings a word stretched for emphasis may stand for. A letter typed
         three times or more is cut to one or to two: at the end of a word one is
         the usual spelling ("sooo", "heyyy") unless the letter is one that
-        doubles there ("alll", "offf"); inside a word two ("goood", "cooool")."""
+        doubles there ("alll", "offf"); inside a word two ("goood", "cooool").
+        A word that is one letter typed over and over is tried with two first:
+        "mmm" is the hum "mm", not the letter M."""
         if not re.search(r"(.)\1\1", word):
             return []
         def cut(double_inside, double_final):
@@ -953,7 +986,7 @@ class Normalizer:
                 final = match.end() == len(word)
                 return match.group(1) * (2 if (double_final if final else double_inside) else 1)
             return re.sub(r"(.)\1{2,}", replace, word)
-        liked = bool(re.search(r"([lfsz])\1\1+$", word)) or re.sub(r"(.)\1{2,}$", r"\1", word) == "to"
+        liked = bool(re.search(r"([lfsz])\1\1+$", word)) or len(set(word)) == 1 or re.sub(r"(.)\1{2,}$", r"\1", word) == "to"
         ordered = [cut(True, liked), cut(True, not liked), cut(False, liked), cut(False, not liked)]
         return list(dict.fromkeys(ordered))
 
@@ -983,8 +1016,9 @@ class Normalizer:
             if stem in ("a", "A", "I", "i") and not possessive and not label:
                 return [Word(stem.lower(), raw=raw)]
             return [Word(lower, raw=raw, spell=True)]
-        if stem.isupper() and stem.isalpha() and 2 <= len(stem) <= 5 and (not all_caps or not self.is_word(stem.lower())):
-            if stem in _INITIALISMS or not self.is_word(stem.lower()):
+        if stem.isupper() and stem.isalpha() and 2 <= len(stem) <= 5:
+            known = self.is_word(stem.lower()) and stem not in _LETTER_CAPITALS
+            if not known or (stem in _INITIALISMS and not all_caps):
                 return [Word(lower, raw=raw, spell=True)]
         if not letters.isalpha():
             return []

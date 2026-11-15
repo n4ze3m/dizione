@@ -109,6 +109,28 @@ uber          UW1 B ER0
 tesla         T EH1 S L AH0
 okay          OW2 K EY1
 
+# names and rare words the dictionary lacks or has wrong
+emmaleigh     EH1 M AH0 L IY0
+hermione      HH ER0 M AY1 AH0 N IY0
+persephone    P ER0 S EH1 F AH0 N IY0
+coeliac       S IY1 L IY0 AE2 K
+celiac        S IY1 L IY0 AE2 K
+scabies       S K EY1 B IY0 Z
+lyssavirus    L IH1 S AH0 V AY2 R AH0 S
+
+# sounds people write: said as the sound, not letter by letter
+# ("sh", "shh", "hm", "hmm" and "mm" are in the dictionary; in capitals "SS"
+# and "ZZ" stay letters)
+ss            S
+zz            Z
+zzz           Z
+tsk           T IH1 S K
+psst          P S T
+pfft          P F T
+hmph          HH AH1 M F
+psh           P SH
+pssh          P SH
+
 # words the text rules say: units, file names
 milliamp      M IH1 L IY0 AE2 M P
 kilocalorie   K IH1 L AH0 K AE2 L ER0 IY0

@@ -173,6 +173,24 @@ class NormalizerTests(unittest.TestCase):
         self.assertEqual(normalize.pairs(4070), "forty seventy")
         self.assertEqual(normalize.duration(1, 0, 5), "one hour and five seconds")
 
+    def test_continental_figures(self):
+        """"1.299,50": a point between the thousands, a comma before the decimals."""
+        euros = "one thousand two hundred ninety nine euros and fifty cents"
+        for written, spoken in (
+                ("It costs 1.299,50 today.", "it costs one thousand two hundred ninety nine point five zero today ."),
+                ("€1.299,50, 1.299,50 € and 12,50 EUR.", f"{euros} , {euros} and twelve euros and fifty cents ."),
+                ("Up 3,5% to 1.234.567,89.", "up three point five percent to one million two hundred thirty four thousand "
+                                             "five hundred sixty seven point eight nine ."),
+                ("A 1,5 kg bag for 5-10 €, not -3 €.", "a one point five kilograms bag for five to ten euros , not minus three euros ."),
+                # a comma that parts thousands or the items of a list stays one, and so does a point before decimals
+                ("$1,250.50, 1,234 and 3.14.", "one thousand two hundred fifty dollars and fifty cents , "
+                                               "one thousand two hundred thirty four and three point one four ."),
+                ("Rooms 1,2 and 3; 2.500 people; €12,500.", "rooms one , two and three ; two point five zero zero people ; "
+                                                            "twelve thousand five hundred euros ."),
+                ("Pay 3,50 or 4,20 at 192.168.100.200,80.", "pay three , fifty or four , twenty at one nine two point one six eight "
+                                                            "point one zero zero point two zero zero , eighty .")):
+            self.assertEqual(said(normalize.tokens(written)), spoken)
+
     def test_emoticons_and_emoji_are_neither_words_nor_pauses(self):
         for written in ("ok :))", "ok :-) <3", "ok 🙂👍", "ok :D ;) :P"):
             tokens = normalize.tokens(written)
@@ -191,7 +209,16 @@ class NormalizerTests(unittest.TestCase):
         self.assertEqual(normalize.Normalizer._unstretched("goooood")[0], "good")
         self.assertEqual(normalize.Normalizer._unstretched("tooo")[0], "too")
         self.assertEqual(normalize.Normalizer._unstretched("alll")[0], "all")
+        self.assertEqual(normalize.Normalizer._unstretched("mmmm")[0], "mm")       # the hum, not the letter M
         self.assertEqual(normalize.Normalizer._unstretched("sirr"), [])
+
+    def test_capitals_that_are_letters(self):
+        tokens = normalize.tokens                           # every spelling counts as a word here
+        self.assertEqual(said(tokens("The US and IT teams met the SS Great Britain.")),
+                         "the [U S] and [I T] teams met the [S S] great britain .")
+        # In a text typed in capitals a word is a word; "SS" and "ZZ" are never the hiss and the snore.
+        self.assertEqual(said(tokens("IT IS A LED SIGN, NOT THE SS OR ZZ TOP.")), "it is a led sign , not the [S S] or [Z Z] top .")
+        self.assertEqual(said(tokens("Ss, zz, tsk.")), "ss , zz , tsk .")
 
 
 class SentenceTests(unittest.TestCase):
@@ -299,6 +326,17 @@ class TableTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             tables.names({"tung sahur": "T UW1 NG"})
         self.assertIn(("tung", "tung", "tung", "sahur"), tables.names("exceptions.txt"))
+
+    def test_a_homograph_rule_can_ask_for_a_hyphen_before_the_word(self):
+        self.assertTrue(any(sense == "past" and name == "joined" and "well" in words
+                            for sense, conditions in homographs.read_rules()["read"] for name, words in conditions))
+        well, tokens = frozenset(("well", "widely")), ["a", "well", "read", "girl"]
+        self.assertTrue(homographs._holds("joined", well, tokens, 2, True))
+        self.assertFalse(homographs._holds("joined", well, tokens, 2))             # "as well read it": no hyphen
+        self.assertFalse(homographs._holds("joined", well, ["a", "must", "read"], 2, True))
+        self.assertFalse(homographs._holds("joined", well, ["read", "it"], 0, True))
+        with self.assertRaises(ValueError):
+            homographs.read_rules("read  past  hyphen: well")
 
 
 class InventoryTests(unittest.TestCase):
@@ -415,6 +453,33 @@ class EngineTests(unittest.TestCase):
             self.assertLess(len(phones), len(word) + 3)
             self.assertEqual(sum(stress == 1 for _, stress in phones), 1)
         self.assertEqual(self.phonemizer.word("josiana's")[0][-1], ("z", 0))
+
+    def test_names_in_leigh_and_words_in_virus_are_put_together_from_their_parts(self):
+        word, text = self.phonemizer.word, lambda spelling: convert.to_text(self.phonemizer.word(spelling)[0])
+        self.assertEqual(word("ryleigh"), word("ryley"))                    # the dictionary's "Ryley"
+        self.assertEqual(word("kayleigh"), word("kayley"))                  # the model, on the spelling it reads well
+        self.assertEqual((text("ryleigh"), text("kayleigh's"), text("paisleighs")), ("ɹ ˈaɪ l i", "k ˈeɪ l i z", "p ˈeɪ z l i z"))
+        self.assertEqual((text("leigh"), text("sleigh"), text("raleigh")), ("l ˈiː", "s l ˈeɪ", "ɹ ˈɔː l i"))     # dictionary words stay
+        self.assertEqual((text("coronavirus"), word("coronavirus")[1]), ("k ɚ ɹ ˈoʊ n ə v ˌaɪ ɹ ə s", "ending"))
+        self.assertEqual(text("coronaviruses"), "k ɚ ɹ ˈoʊ n ə v ˌaɪ ɹ ə s ᵻ z")
+        self.assertEqual(text("coronavirus's"), "k ɚ ɹ ˈoʊ n ə v ˌaɪ ɹ ə s ᵻ z")
+        self.assertEqual(word("norovirus")[1], "model")                     # the first part is a guess, "virus" is not
+        self.assertTrue(text("norovirus").endswith("v ˌaɪ ɹ ə s"))
+        self.assertEqual((word("virus")[1], word("antivirus")[1]), ("dictionary", "dictionary"))
+        engine = Phonemizer(BUILT, overrides={"emmaleigh": "EH1 M AH0", "lyssavirus": "L IH1 S AH0"})
+        self.assertEqual(self.speak("Emmaleigh, lyssavirus", engine), "ˈɛ m ə , l ˈɪ s ə")      # the user's own words still win
+
+    def test_sounds_people_write_and_the_capitals_that_stay_letters(self):
+        self.assertEqual(self.speak("Sh! Ss! Tsk!"), "ʃ ! s ! t ˈɪ s k !")
+        self.assertEqual(self.speak("Sss. Zzzz. Mmmm. Pssst."), "s . z . m . p s t .")
+        self.assertEqual(self.speak("The SS and ZZ Top"), "ð ɪ <sp> ˌɛ s ˈɛ s <sp> æ n d <sp> z ˌiː z ˈiː <sp> t ˈɑː p")
+        self.assertEqual(self.speak("THE SS MEN SAID TSK AND PSST"), "ð ɪ <sp> ˌɛ s ˈɛ s <sp> m ˈɛ n <sp> s ˈɛ d <sp> t ˈɪ s k <sp> æ n d <sp> p s t")
+
+    def test_a_hyphen_before_read_decides_the_past_form(self):
+        choose = self.phonemizer.homographs.choose
+        self.assertEqual(choose("read", ["She's", "a", "well", "read", "girl", "."], 3, joined=True)["id"], "past")
+        self.assertIn("w ˈɛ l ɹ ˈɛ d", self.speak("Well-read people read a lot."))
+        self.assertIn("p ˈiː p əl <sp> ɹ ˈiː d", self.speak("Well-read people read a lot."))
 
     def test_phrase_table_can_be_switched_off(self):
         joined = self.speak("Most of the time")

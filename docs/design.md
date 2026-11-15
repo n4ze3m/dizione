@@ -44,9 +44,10 @@ New words appear faster than dictionaries: names, slang, memes. Three places
 take a pronunciation, from the most to the least lasting:
 
 1. **For everyone:** a line in `src/dizione/data/exceptions.txt`
-   (word, two spaces, pronunciation). 204 words are there now, among them 55
-   of today's slang ("skibidi", "rizz", "delulu", "lowkey", "bussin") and 43
-   meme names ("tralalero", "bombardiro", "sahur"). No rebuild is needed.
+   (word, two spaces, pronunciation). 220 words are there now, among them 55
+   of today's slang ("skibidi", "rizz", "delulu", "lowkey", "bussin"), 43
+   meme names ("tralalero", "bombardiro", "sahur") and 9 sounds people write
+   ("tsk", "psst", "ss"). No rebuild is needed.
 2. **For you:** your own file, named by `DIZIONE_OVERRIDES`, or
    `Phonemizer(overrides={...})`. Same format; it wins over the built-in list.
 3. **For one sentence:** braces in the text, as above.
@@ -95,10 +96,11 @@ comes from eSpeak, misaki or Wiktionary.
 | 2. Your overrides, inline phonemes, taught names | `engine.py`, `data/exceptions.txt` | Win over everything. |
 | 3. Function words and groups | `sentence.py`, `data/function_words.txt`, `data/phrases.txt` | 160 function words have a weak form and a stress class; 49 pairs such as "of the" are spoken as one word. |
 | 4. Homographs | `homographs.py`, `data/homograph_rules.txt` | "read", "live", "use", "record": hand rules for a few grammar-driven cases, then a linear classifier on the neighbouring words. |
-| 5. Dictionary | `convert.py`, `align.py`, `data/exceptions.txt` | 124,926 words from CMUdict, converted to the TTS phones by rule when the data is built. 204 hand-written exceptions (recent words, slang, names, usual pronunciations) and one name of several words. |
+| 5. Dictionary | `convert.py`, `align.py`, `data/exceptions.txt` | 124,926 words from CMUdict, converted to the TTS phones by rule when the data is built. 220 hand-written exceptions (recent words, slang, names, sounds, usual pronunciations), one of them a name of several words. |
 | 6. Word endings | `morphology.py` | Plurals, possessives, -ed, -ing, -ly and other regular endings, some prefixes, compounds of two dictionary words, British spellings. |
-| 7. Unknown-word model | `g2p.py` | Letters to phonemes in one forward pass (NumPy). |
-| 8. Sentence rules | `sentence.py` | Sentence stress, "the" and "to" before a vowel, linking r, the flap of "it" and "at" before a vowel. |
+| 7. Words put together from parts | `engine.py` | Two kinds of new word the model reads badly. A name in "-leigh" is said like the same name in "-ley" ("Kayleigh", "Ryleigh"). A word in "-virus" is its first part, from the dictionary or the model, and then "virus" ("coronavirus"). |
+| 8. Unknown-word model | `g2p.py` | Letters to phonemes in one forward pass (NumPy). |
+| 9. Sentence rules | `sentence.py` | Sentence stress, "the" and "to" before a vowel, linking r, the flap of "it" and "at" before a vowel. |
 
 **What the rules add to CMUdict.** CMUdict writes 39 broad phonemes. The model
 was trained on a narrower transcription, and `convert.py` produces it:
@@ -145,6 +147,8 @@ names; a comma is a short break.
 | `20:00`, `14:30`, `14:00-16:00`, `7.30 pm`, `4 p.m. ET` | "twenty hundred", "fourteen thirty", "fourteen hundred to sixteen hundred", "seven thirty P M", "four P M E T" |
 | `16:9`, `3:1`, `1:25,000` | "sixteen to nine", "three to one", "one to twenty five thousand" |
 | `-€12.50`, `50¢`, `CHF 28` | "minus twelve euros and fifty cents", "fifty cents", "twenty eight Swiss francs" |
+| `20 €`, `20€`, `5-10 €`, `-3 €` | a currency sign after the amount: "twenty euros", "five to ten euros", "minus three euros" |
+| `1.299,50`, `€1.299,50`, `1.299,50 €`, `12,50 EUR`, `3,5%`, `1,5 kg` | figures written the continental way: "one thousand two hundred ninety nine point five zero"; "one thousand two hundred ninety nine euros and fifty cents" (twice); "twelve euros and fifty cents"; "three point five percent"; "one point five kilograms". A comma is read as a decimal comma only where the form leaves no doubt: after thousands parted by points, next to a currency or a percent sign, or before a unit. `1,2 and 3` stays a list and `2.500` stays "two point five zero zero" |
 | `3.5 m`, `1.5 L`, `180 hp`, `2 tsp`, `5,000 mAh`, `30 min. by bus` | meters, liters, horsepower, teaspoons, milliamp hours; the stop after a unit is not a sentence end before a small letter. One-letter units are read in one letter case only (`data/units.txt`): `5G` and `5 M` are not units |
 | `3 × 4 metres`, `2 m × 1 m` | "three by four metres", "two meters by one meter" |
 | `Mon.-Fri.`, `max. load`, `Est. arrival`, `3rd fl.`, `Sizes S-XL` | "Monday to Friday", "maximum load", "estimated arrival", "third floor", "S to X L" |
@@ -233,7 +237,10 @@ sense never occurs in the training sentences. 855 non-zero weights in total.
 The training sentences are from Wikipedia, where questions, commands and "I"
 are rare; 15 hand rules cover the cases that matter in speech ("have you
 read" / "will you read", "take a bow"). They add 0.4 points on the held-out
-set and fix every such sentence in `tests/data/tricky_sentences.txt`.
+set and fix every such sentence in `tests/data/tricky_sentences.txt`. A
+sixteenth rule came after the release and is not in that figure: "read"
+joined by a hyphen to "well", "widely", "best" and the like is the past form
+("a well-read girl").
 
 ### Agreement with eSpeak on the corpus
 
@@ -346,10 +353,44 @@ For whoever re-annotates the corpus.
   replaced. Apart from "Ctrl", none of these occurs in the corpus; the
   comparison above is the proof.
 
+## After the release: what changed and what did not
+
+Fixes for words and figures people reported, made on 15 Nov 2026. For whoever
+uses the tokens of an earlier build.
+
+* **The front-end fingerprint did not change.** tiny-voca's
+  `text.frontend_fingerprint()` is still `c729f235…7b69d4da`: version 4 and
+  the 76 symbols are as they were. The released checkpoint loads and speaks
+  with this build.
+* **The build fingerprint did change**, as with any edit:
+  `identity()["fingerprint"]` went from `35f4abab…33bbb39c` to
+  `82d0361d…05fc5d7f`.
+* **The built data did not change.** The dictionary and the homograph weights
+  were rebuilt with the new code and are the same bytes as the released files.
+* **The corpus did not change.** All 8,749 distinct sentences of the dataset
+  were phonemized with the old and the new code: tokens and stress are
+  identical in every one. So are the 166 sentences the test file had before.
+* **One existing output changed.** "SS" in capitals was read through the
+  dictionary's entry (`ɛ s ˈɛ s`) and is now named letter by letter like any
+  other initialism (`ˌɛ s ˈɛ s`): the first letter gains a lesser stress.
+* **Prose can differ outside the corpus** in exactly these cases:
+  the words now taught ("Emmaleigh", "Hermione", "Persephone", "coeliac",
+  "celiac", "scabies", "lyssavirus"); a word in "-leigh" or in "-virus" that
+  the dictionary and the ending rules do not know; "read" after a hyphen and
+  one of the fifteen words of the new rule; the sounds "ss", "zz", "tsk",
+  "psst", "pfft", "hmph", "psh", "pssh" in small letters or in capitals
+  (except "SS" and "ZZ", which are letters in capitals), and a letter typed
+  three times or more whose double is a word ("mmm" is "mm").
+* **Figures differ** where a comma is now a decimal comma (see "Text rules"),
+  where a currency sign follows the amount (it was dropped: "20 €" was
+  "twenty"), where a minus stands before such an amount (it was dropped before
+  a currency code), and in a range before a sign ("5-10 EUR" was "five ten
+  euros").
+
 ## Tests
 
-`tests/test_dizione.py` (29 tests) and `tests/data/tricky_sentences.txt`
-(166 sentences: 130 with the words they must turn into, 50 stretches of phones
+`tests/test_dizione.py` (35 tests) and `tests/data/tricky_sentences.txt`
+(188 sentences: 152 with the words they must turn into, 68 stretches of phones
 that must appear). Every bug fixed has a sentence there.
 Run them with `PYTHONPATH=src python -m unittest discover -s tests`.
 
@@ -367,11 +408,17 @@ error.
 
 1. **Unknown words.** One in three has an error (one in four if stress is
    not counted), usually one vowel or the stress. Foreign names are the worst ("Circe", "Phaeton"). Add names you
-   care about to the override list.
+   care about to the override list. British spellings with "oe" are guessed
+   too and come out wrong ("oesophagus", "oestrogen", "manoeuvre"); only
+   "coeliac" is taught. A rule that writes "e" for "oe" was checked against
+   the dictionary and dropped: it turns German names into other names
+   ("Boehm" into "Behm").
 2. **Homographs outside the 162** are not disambiguated ("does" as the plural
    of "doe", "bows", "moped"). The classifier's sense of what is common comes
    from Wikipedia; the 34 words that are not noun-or-verb pairs are right 89%
-   of the time on held-out sentences.
+   of the time on held-out sentences. A hyphen decides "read" only after the
+   words of its rule: "re-read" and "well read" without a hyphen are left to
+   the classifier.
 3. **Not heard yet.** The current model has never spoken these tokens. The
    agreement numbers say they are close to what it knows; the proof is the
    fine-tune and a listening test.
@@ -397,6 +444,11 @@ error.
    555-0132" does not say "plus", "$5-$10" has no "to". "9.30 to 11.30" is a
    time only after a word like "window", "open", "slot". No Roman numerals
    beyond "Henry VIII" and "World War II", nine currencies, 69 units.
+   Continental figures are read only where the form leaves no doubt. "2.500"
+   is "two point five zero zero" and "1.234.567" is read like a version;
+   "12,50" with no sign or unit beside it is two numbers; three decimals
+   after a comma ("1.234,567") are not joined; thousands parted by spaces or
+   apostrophes ("1 299,50", "1'299.50") are not handled.
 7. **Capitals decide initialisms.** "WHO" is read "who"; an unknown word of up
    to five capitals is spelled; a two-letter one the dictionary knows as a
    word is read as that word ("ET" outside a time, "CT", "PO" outside a code).
@@ -417,6 +469,12 @@ error.
     regular-expression look-behind, which the port has to replace.
 12. **Compounds and endings are conservative.** Two dictionary words of four
     letters or more ("sandpiper"); shorter halves go to the model.
+13. **Sounds people write are a short list.** "Sh", "ss", "tsk", "psst",
+    "pfft", "hmph", "psh", "zzz", "hm" and "mm" are said as sounds. "Pst",
+    "pff", "tch" and "ssh" are still named letter by letter ("PST" and "SSH"
+    mean other things in capitals). "Ew" and "ahem" are left to the model,
+    which gets them wrong. A sound with no vowel is one or two short phones;
+    how well it is spoken depends on the voice.
 
 ## Building
 

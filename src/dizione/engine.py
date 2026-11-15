@@ -8,12 +8,14 @@ Order of authority for one word:
   4. function words and function-word groups (sentence level)
   5. the dictionary built from CMUdict
   6. regular endings, prefixes and compounds of dictionary words
-  7. the unknown-word model
+  7. names in "-leigh" and words in "-virus", put together from their parts
+  8. the unknown-word model
 """
 
 import json
 import os
 from pathlib import Path
+import re
 
 from . import morphology, normalize, sentence, tables
 from .align import Aligner
@@ -25,6 +27,8 @@ from .sentence import Unit
 ENVIRONMENT = "DIZIONE_DATA"
 OVERRIDES_ENVIRONMENT = "DIZIONE_OVERRIDES"
 _LETTER_NAMES = None
+_LEIGH = re.compile(r"(?<=[a-z]{2})leigh(?=s?$)")
+_VIRUS = ("viruses", "virus")
 
 
 def default_directory():
@@ -133,6 +137,24 @@ class Phonemizer:
         """True for a spelling the tables or the dictionary know."""
         return word in self.lexicon or word in self.functions or word in self.exceptions or word in self.overrides
 
+    def from_parts(self, word):
+        """``(phones, source)`` for two kinds of new word the model reads
+        badly, or ``None``. A name in "-leigh" is said like the same name in
+        "-ley" (Kayleigh, Ryleigh). A word in "-virus" is its first part, from
+        the dictionary or the model, and then "virus" (coronavirus)."""
+        if word.endswith("'s") and len(word) > 3:
+            found = self.from_parts(word[:-2])
+            return found and (morphology.plural(found[0]), found[1])
+        if _LEIGH.search(word):
+            return self.word(_LEIGH.sub("ley", word))
+        for tail in _VIRUS:
+            second = self.known(tail) if word.endswith(tail) and len(word) - len(tail) > 2 else None
+            if second is not None:
+                first, source = self.word(word[:-len(tail)])
+                phones = sentence.promote(settle_stress(morphology.compound(first, second)))
+                return phones, "model" if source == "model" else "ending"
+        return None
+
     def word(self, word):
         """``(phones, source)`` for one spelling in lower case."""
         if word in self._cache:
@@ -142,6 +164,10 @@ class Phonemizer:
             phones, source = morphology.derive(word, self.known, self.ordinary), "ending"
             if phones is not None:
                 phones = settle_stress(phones)
+        if phones is None:
+            found = self.from_parts(word)
+            if found:
+                phones, source = found
         if phones is None and word.endswith("'s") and len(word) > 3:
             phones, source = morphology.plural(self.guess(word[:-2])), "model"
         if phones is None:
@@ -184,7 +210,7 @@ class Phonemizer:
                 if token.text in self.overrides:
                     units.append(Unit(token.text, self.known(token.text), "c", attach=token.attach, source="override"))
                 elif self.homographs and written and self.homographs.covers(token.text) and token.text not in self.exceptions:
-                    phones, ending = self.homographs.pronounce(token.text, written, places[index])
+                    phones, ending = self.homographs.pronounce(token.text, written, places[index], token.attach)
                     phones = morphology.plural(from_text(phones)) if ending else from_text(phones)
                     units.append(Unit(token.text, phones, "c", attach=token.attach, source="homograph"))
                 elif token.text in self.functions:

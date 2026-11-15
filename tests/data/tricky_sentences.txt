@@ -414,3 +414,79 @@ TEXT: We made a plan. A dog barked.
 SAID: we made a plan . a dog barked .
 TEXT: F. A. McKenzie wrote it.
 SAID: [F] . [A] . mckenzie wrote it .
+
+# ---- names and rare words the dictionary lacks or has wrong ----
+TEXT: Emmaleigh and Hermione have coeliac disease.
+SAID: emmaleigh and hermione have coeliac disease .
+PHONES: ˈɛ m əl i <sp> æ n d <sp> h ɚ m ˈaɪə n i <sp> h æ v <sp> s ˈiː l ɪ ˌæ k <sp> d ɪ z ˈiː z
+TEXT: Celiac disease, scabies and a lyssavirus.
+SAID: celiac disease , scabies and a lyssavirus .
+PHONES: s ˈiː l ɪ ˌæ k <sp> d ɪ z ˈiː z , s k ˈeɪ b i z <sp> æ n d <sp> ɐ <sp> l ˈɪ s ə v ˌaɪ ɹ ə s
+TEXT: Hermione's book about Persephone.
+SAID: hermione's book about persephone .
+PHONES: h ɚ m ˈaɪə n i z
+PHONES: p ɚ s ˈɛ f ə n i
+
+# ---- a name in "-leigh" is said like "-ley"; a word in "-virus" is a first part and "virus" ----
+TEXT: Ryleigh, Paisleigh and Kayleigh met Finleigh's sister.
+SAID: ryleigh , paisleigh and kayleigh met finleigh's sister .
+PHONES: ɹ ˈaɪ l i , p ˈeɪ z l i <sp> æ n d <sp> k ˈeɪ l i <sp> m ˈɛ t <sp> f ˈɪ n l i z
+TEXT: The coronavirus and a rotavirus are not a poxvirus.
+SAID: the coronavirus and a rotavirus are not a poxvirus .
+PHONES: k ɚ ɹ ˈoʊ n ə v ˌaɪ ɹ ə s
+PHONES: ɹ ˈoʊ ɾ ə v ˌaɪ ɹ ə s
+PHONES: p ˈɑː k s v aɪ ɹ ə s
+
+# ---- "read" joined to "well" by a hyphen is the past form ----
+TEXT: She's a well-read girl.
+SAID: she's a well +read girl .
+PHONES: w ˈɛ l ɹ ˈɛ d <sp> ɡ ˈɜː l
+TEXT: A widely-read paper, a must-read book.
+SAID: a widely +read paper , a must +read book .
+PHONES: w ˈaɪ d l i ɹ ˈɛ d
+PHONES: m ˈʌ s t ɹ ˈiː d
+TEXT: You may as well read it.
+SAID: you may as well read it .
+PHONES: w ˈɛ l <sp> ɹ ˈiː d <sp> ɪ t
+
+# ---- continental figures: a point between the thousands, a comma before the decimals ----
+TEXT: The price is 1.299,50 today.
+SAID: the price is one thousand two hundred ninety nine point five zero today .
+TEXT: It costs €1.299,50 or 1.299,50 € or 1.299,50 EUR.
+SAID: it costs one thousand two hundred ninety nine euros and fifty cents or one thousand two hundred ninety nine euros and fifty cents or one thousand two hundred ninety nine euros and fifty cents .
+TEXT: Up 3,5% to 1.234.567,89.
+SAID: up three point five percent to one million two hundred thirty four thousand five hundred sixty seven point eight nine .
+TEXT: Only 0,99 €, or £3,99, or 12,50 kg for 5-10 €.
+SAID: only ninety nine cents , or three pounds and ninety nine pence , or twelve point five zero kilograms for five to ten euros .
+TEXT: A loss of -1.299,50 €.
+SAID: a loss of minus one thousand two hundred ninety nine euros and fifty cents .
+# American figures, lists and internet addresses are read as before
+TEXT: She paid $1,250.50, then 1,234 more, for rooms 1,2 and 3.
+SAID: she paid one thousand two hundred fifty dollars and fifty cents , then one thousand two hundred thirty four more , for rooms one , two and three .
+TEXT: About 2.500 people pay 3,50 or 4,20.
+SAID: about two point five zero zero people pay three , fifty or four , twenty .
+TEXT: Port 192.168.100.200,80 is open.
+SAID: port one nine two point one six eight point one zero zero point two zero zero , eighty is open .
+
+# ---- sounds people write are said as sounds, not letter by letter ----
+TEXT: Sh! Ss! Tsk!
+SAID: sh ! ss ! tsk !
+PHONES: ʃ ! s ! t ˈɪ s k !
+TEXT: Psst, over here. Pfft, no way. Hmph, fine. Zzz.
+SAID: psst , over here . pfft , no way . hmph , fine . zzz .
+PHONES: p s t , ˌoʊ v ɚ <sp> h ˈɪɹ . p f t , n ˈoʊ <sp> w ˈeɪ . h ˈʌ m f , f ˈaɪ n . z .
+TEXT: Mm, mmm, mmmm. Sss. Tsk-tsk.
+SAID: mm , mm , mm . ss . tsk +tsk .
+PHONES: m , m , m . s . t ˈɪ s k t ˈɪ s k .
+# in capitals "SS" and "ZZ" are letters, also in a text typed in capitals
+TEXT: The SS Great Britain and ZZ Top.
+SAID: the [S S] great britain and [Z Z] top .
+PHONES: ð ɪ <sp> ˌɛ s ˈɛ s <sp> ɡ ɹ ˈeɪ t
+TEXT: THE SS OFFICERS SAID PSST AND TSK.
+SAID: the [S S] officers said psst and tsk .
+PHONES: s ˈɛ d <sp> p s t <sp> æ n d <sp> t ˈɪ s k
+
+# ---- the voice was reported to drop a syllable here: the phones have all of them ----
+TEXT: The counterrevolutionaries fled.
+SAID: the counterrevolutionaries fled .
+PHONES: k ˌaʊ n t ɚ ɹ ɛ v ə l ˈuː ʃ ə n ˌɛ ɹ i z
