@@ -41,7 +41,8 @@ from dizione.engine import Phonemizer
 p = Phonemizer(overrides={"kubernetes": "k ˌuː b ɚ n ˈɛ ɾ iː z"})
 ```
 
-Or write a word inline: `Say {HH AH0 L OW1} to everyone.`
+Or write a word inline: `Say {HH AH0 L OW1} to everyone.` Braces that hold
+anything else are read as text.
 
 ## Build the data
 

@@ -272,8 +272,24 @@ class NormalizerTests(unittest.TestCase):
         tokens = normalize.tokens("Say {HH AH0 L OW1} to Samir{s ə m ˈɪɹ}.")
         given = [token.phones for token in tokens if isinstance(token, normalize.Word) and token.phones]
         self.assertEqual(given, [P("h ə l ˈoʊ"), P("s ə m ˈɪɹ")])
-        with self.assertRaises(ValueError):
-            normalize.tokens("Say {x y z}.")
+
+    def test_braces_that_hold_no_pronunciation_are_read_as_text(self):
+        for written, spoken in (
+                ("Say {x y z}.", "say ( [X] [Y] [Z] ) ."),
+                ("Use {name} as a placeholder.", "use ( name ) as a placeholder ."),
+                ("The set {1, 2, 3} has three items.", "the set ( one , two , three ) has three items ."),
+                ("Write f\"{x}\" and {} here.", "write [F] \" ( [X] ) \" and ( ) here ."),
+                ("$\\frac{1}{2}$ and x_{i} with $\\rho_{i j}=1$.", "frac ( one ) ( two ) and [X] ( i ) with rho ( i [J] ) equals one ."),
+                ("function f() { return 1; }", "function [F] ( ) ( return one ; )"),
+                ("An open { brace.", "an open ( brace ."),
+                # a pronunciation with a slip in it is read as written, and so are single letters
+                ("{HH AH0 L OW1 QQ}", "( hh [A H] zero [L] [O W] one qq )"),
+                ("Then {n} and {P S T}.", "then ( [N] ) and ( [P] [S] [T] ) .")):
+            tokens = normalize.tokens(written)
+            self.assertEqual(said(tokens), spoken)
+            self.assertFalse(any(isinstance(token, normalize.Word) and token.phones for token in tokens), written)
+        mixed = normalize.tokens("Say {HH AH0 L OW1} to {name}.")
+        self.assertEqual(said(mixed), "say {h ə l oʊ} to ( name ) .")
 
     def test_stretched_words(self):
         self.assertEqual(normalize.Normalizer._unstretched("soooo")[0], "so")
@@ -526,6 +542,8 @@ class EngineTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             text.phonemize(":)")                           # nothing to pronounce
         self.assertEqual(str(text.phonemize("Hello")), "<bos> h ə l ˈoʊ <eos>")
+        for braces in ("Use {name} here.", "if(a>b){return a;}", "{\"n\": 3}", "\\frac{1}{2}", "{{x}} and {HH AH0 QQ}", "a { b } c {"):
+            self.assertTrue(text.phonemize(braces).symbols, braces)        # braces never stop the reading
 
     def test_user_overrides_come_first(self):
         engine = Phonemizer(BUILT, overrides={"samir": "S AE1 M ER0", "read": "ɹ ˈɛ d", "the": "ð ˈiː"})

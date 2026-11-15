@@ -37,6 +37,9 @@ marks (`h ə l ˈoʊ`; used as written).
 
 **Inline, for one word in one text:** `Say {HH AH0 L OW1} to Samir{S AH0 M IH1 R}.`
 Braces alone are spoken as given; braces right after a word replace that word.
+Braces hold a pronunciation when every item in them is a phone and not all
+are single letters. Anything else in braces is read as text and never stops
+the reading: `{name}`, `{1, 2, 3}`, `x_{i}`, `\frac{1}{2}`, `{ return 1; }`.
 
 ## Teaching it new words
 
@@ -457,10 +460,30 @@ changes 1,900, none of which fails; no word form changes.
 Together with the table above, 2,688 of the 1,985,590 sentences and 300 of
 the 1,322,304 word forms are now read differently from the release.
 
+### Braces that hold no pronunciation
+
+Braces that held anything but a pronunciation stopped the reading with an
+error: "Use {name} here", a formula, a piece of code. They are read as text
+now, and nothing in braces can fail.
+
+The 1,985,590 sentences have 2,954 pairs of braces with no braces inside
+them. 2,711 hold something that is not a pronunciation, 153 are empty, 82 hold
+one letter that is also a phone ("{n}", "{b}"), 8 hold two ("{i j}"), and none
+holds a pronunciation. So single letters in braces are text as well.
+
+This round changes 2,002 sentences. 1,973 could not be read before and are
+read now. In the other 29 a letter in braces was a phone and is now named. No
+sentence that could be read before fails now; the 179 that still fail have
+nothing to pronounce. No word form changes. Of the figures, the 57 with
+"\frac{...}" could not be read and are read now.
+
+In all, 4,690 of the 1,985,590 sentences and 300 of the 1,322,304 word forms
+are now read differently from the release.
+
 ## Tests
 
-`tests/test_dizione.py` (42 tests) and `tests/data/tricky_sentences.txt`
-(223 sentences: 187 with the words they must turn into, 84 stretches of phones
+`tests/test_dizione.py` (43 tests) and `tests/data/tricky_sentences.txt`
+(229 sentences: 193 with the words they must turn into, 87 stretches of phones
 that must appear). Every bug fixed has a sentence there.
 Run them with `PYTHONPATH=src python -m unittest discover -s tests`.
 
@@ -471,8 +494,8 @@ Run them with `PYTHONPATH=src python -m unittest discover -s tests`.
 * With the built data (`DIZIONE_DATA`): every tricky sentence, a greeting,
   overrides, unknown words, the pair table switch, the identity.
 
-30,000 random strings of digits, letters and signs go through without an
-error.
+200,000 random strings of digits, letters, signs and braces go through. The
+only error is the one for a text with nothing to pronounce.
 
 ## What is still wrong
 
@@ -565,11 +588,11 @@ error.
     "Ew" and "ahem" are left to the model, which gets them wrong. A sound
     with no vowel is one or two short phones; how well it is spoken depends
     on the voice.
-14. **Braces are always a pronunciation.** Text in braces that is not one
-    stops with an error instead of being read: "{name}", "{1, 2, 3}",
-    "\frac{1}{2}". Of 1,985,590 real sentences 1,973 had such braces: 1,435
-    of them in chat with an assistant (code, formulas), which is one chat
-    sentence in 150.
+14. **Braces.** A pronunciation with a slip in it is not reported any more:
+    it is read out as written ("{HH AH0 L OW1 QQ}" names its letters). A
+    pronunciation made of single letters only is taken for text ("{P S T}"),
+    because "x_{i}" and "{n}" are far more common. Code and formulas in
+    braces are read sign by sign, like the rest of them.
 
 ## Building
 

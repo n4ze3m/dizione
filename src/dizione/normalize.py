@@ -6,7 +6,8 @@ abbreviations, initialisms, symbols, chat spellings, version numbers, codes
 and reference numbers, web addresses and file names.
 Emoticons and emoji are dropped: they are neither read nor a pause.
 A pronunciation can be given inline, ``{HH AH0 L OW1}`` or ``{h ə l ˈoʊ}``,
-alone or right after the word it replaces.
+alone or right after the word it replaces. Braces that hold anything else are
+read as text.
 
 The result is a list of ``Word`` and ``Punct`` tokens. Hand-written tables in
 ``data/`` hold the abbreviations, units, chat spellings and file endings.
@@ -859,11 +860,17 @@ class Normalizer:
         return " " + " ".join(f"{_SPELL}{part[1:]}{_END}" if part.startswith("*") else part for part in said.split()) + " "
 
     def _inline(self, match):
-        """``{...}``: a pronunciation written by the user."""
+        """``{...}``: a pronunciation written by the user. Braces that hold
+        anything else are no error: they stay and are read like brackets
+        ("{name}", "{1, 2, 3}", "\\frac{1}{2}"). So are single letters, which
+        are phones only by chance ("x_{i}", "{n}")."""
         symbols = match.group(2).split()
-        if not symbols:
-            raise ValueError("empty pronunciation {} in the text")
-        phones = convert("", symbols) if is_arpabet(symbols) else from_text(" ".join(symbols))
+        if not symbols or all(len(symbol) == 1 and symbol.isascii() for symbol in symbols):
+            return match.group(0)
+        try:
+            phones = convert("", symbols) if is_arpabet(symbols) else from_text(" ".join(symbols))
+        except ValueError:
+            return match.group(0)
         self.inline.append((match.group(1) or "", phones))
         return f" {_INLINE}{chr(_INLINE_BASE + len(self.inline) - 1)}{_INLINE} "
 

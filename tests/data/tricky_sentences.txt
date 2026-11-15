@@ -587,3 +587,20 @@ TEXT: I upgraded to Python 3.11 last week.
 SAID: i upgraded to python three point eleven last week .
 TEXT: The price went up by 3.11 percent.
 SAID: the price went up by three point one one percent .
+
+# ---- braces that hold no pronunciation are read as text; they never stop the reading ----
+TEXT: Use {name} as a placeholder.
+SAID: use ( name ) as a placeholder .
+PHONES: j ˈuː s ( n ˈeɪ m ) æ z <sp> ɐ <sp> p l ˈeɪ s h oʊ l d ɚ .
+TEXT: The set {1, 2, 3} has three items.
+SAID: the set ( one , two , three ) has three items .
+TEXT: $\frac{1}{2}$ and x_{i} with $\rho_{i j}=1$.
+SAID: frac ( one ) ( two ) and [X] ( i ) with rho ( i [J] ) equals one .
+PHONES: ˈɛ k s ( ˈaɪ ) w ɪ ð <sp> ɹ ˈoʊ ( aɪ <sp> dʒ ˈeɪ )
+TEXT: function f() { return 1; }
+SAID: function [F] ( ) ( return one ; )
+TEXT: Write f"{x}" and {} here.
+SAID: write [F] " ( [X] ) " and ( ) here .
+TEXT: Say {HH AH0 L OW1} to Samir{s ə m ˈɪɹ}, then {n} and {P S T}.
+SAID: say {h ə l oʊ} to {s ə m ɪɹ} , then ( [N] ) and ( [P] [S] [T] ) .
+PHONES: s ˈeɪ <sp> h ə l ˈoʊ <sp> t ə <sp> s ə m ˈɪɹ , ð ˈɛ n ( ˈɛ n ) ˈæ n d ( p ˈiː <sp> ˈɛ s <sp> t ˈiː ) .
