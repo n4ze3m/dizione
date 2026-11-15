@@ -67,6 +67,66 @@ _COMPARISONS = {">=": "greater than or equal to", "<=": "less than or equal to",
 _INITIALISMS = frozenset("US IT AI ID UN EU UK LA AD BC AM PM OS PE PA MA LED SAT RIP ER".split())
 # Sounds written without a vowel. "Ss" among them, or alone, is a hiss ("Sh! Ss! Tsk!").
 _SOUNDS = frozenset("sh shh ss zz hm hmm mm tsk psst pfft hmph psh pssh".split())
+# A comparison between two values is said with "is": "67 > 66" is "sixty seven
+# is greater than sixty six", "see if b>a" is "see if B is greater than A". A
+# value is a figure, a single letter or a closing bracket, with the same space
+# (or none) on both sides of the sign. "Is" is left out where the comparison
+# only describes the value: "for n > 4", "any q > 0", "an integer k ≥ 2". The
+# mark below is put after the first value and stays there while the figures
+# around it are turned into words.
+_IS = chr(0xE006)
+_COMPARED = re.compile(r"(?P<gap>[ \t]?)(?P<sign>>=|<=|!=|[<>≥≤≠])(?P=gap)")
+_VALUE_BEFORE = re.compile(r"(?:(?<![\w.,])\d[\d.,]*%?|(?<![\w'’.-])[A-Za-z]|[)\]])$")
+_VALUE_AFTER = re.compile(r"(?:[-+]?[$£€¥₹]?\d[\d.,]*%?(?!\w)|\.\d|[A-Za-z](?![\w'’])|[(\[])")
+_CLAUSE_OPENERS = frozenset("if elif while when whenever where whether that because since as and or but so then think thinks "
+                            "thought know knows say says said suppose assume means implies hence thus therefore although though "
+                            "unless until once else also clearly obviously indeed here now again first next finally similarly "
+                            "otherwise however moreover".split())
+# "A", "a" and the small letters chat writes for a word ("k", "u", "r") are read
+# as words. Beside a sign or alone in brackets they stand for something and are
+# named: "a=10", "b>a", "k = k + 1", "(a)". After "=" or a spaced sign the letter
+# must not open a phrase ("mode = a set of notes").
+_SIGN = r"[<>+*/^≤≥≠≈×÷±]"
+_SPACED_SIGN = r" [<>+*≤≥≠≈×÷±] "
+_NO_PHRASE = r"(?![\w'’-]|\s+(?!(?:and|or|then|if|when|where|while|for|is|are|was|but|so|in|to)\b)[A-Za-z])"
+_LETTER_PLACES = tuple(re.compile(pattern) for pattern in (
+    r"(?<![\w'’.-])(?P<letter>[Aakur])(?=" + _IS + r"?\s?[<>!=]?=)",                     # a=10, a = 10, a >= b
+    r"[<>!=]?=\s?(?P<letter>[Aakur])" + _NO_PHRASE,                                      # x=a, c = a + b
+    r"(?<![\w'’.-])(?P<letter>[Aakur])(?=" + _IS + r"?" + _SIGN + r"(?:[\w($]|\.\d))",   # a>b, a+b, a/b, a^2
+    r"(?<=[\w)" + _IS + r"]" + _SIGN + r")(?<![Ww]/)(?P<letter>[Aakur])(?![\w'’-])",     # b>a, 1/a; not "w/a friend"
+    r"(?<![\w'’.-])(?P<letter>[Aakur])(?=" + _IS + r"?" + _SPACED_SIGN + r"(?:[A-Za-z]|\d[\d.,]*)(?![\w'’]))",   # a > b
+    r"(?<![\w'’.])(?:[A-Za-z]|\d[\d.,]*)" + _IS + r"?" + _SPACED_SIGN + r"(?P<letter>[Aakur])" + _NO_PHRASE,    # b > a
+    r"(?<=\()(?P<letter>[Aakur])(?=\)|, )",                                              # (a), f(a, b)
+    r"(?<=, )(?P<letter>[Aakur])(?=\))",                                                 # f(b, a)
+    r"(?:(?<=\s)|^)(?P<letter>[akur])(?=\)\s)",                                          # a) the first point
+))
+# "<b>", "</p>", "<your name>", "Vec<u64>", "map<int, int>": angle brackets that
+# enclose something. The "<" and ">" that are left may compare two things.
+_ANGLES = re.compile(r"(?<![\w)" + _END + _IS + r"])<[A-Za-z0-9/!?][^<>(){}+*;|\n]*>"
+                     r"|(?<=[\w" + _END + _IS + r"])<[^<>(){}+*;|\n]{1,80}>(?![\w$])"
+                     r"|</?[A-Za-z][\w-]+/?>")
+_ANGLE_MARK = chr(0xE005)
+
+
+def _without_angles(text):
+    """``text`` with the angle brackets that enclose something replaced by a
+    mark, one for one, the inner ones first."""
+    while "<" in text and ">" in text:
+        marked = _ANGLES.sub(lambda match: _ANGLE_MARK + match.group(0)[1:-1] + _ANGLE_MARK, text)
+        if marked == text:
+            break
+        text = marked
+    return text
+
+
+# "<" or ">" with no space on either side: "b>a", "x<5", "p<.05". It is read as a
+# comparison when a figure stands on one side, or a single letter or a bracket on
+# both. "File>Open" and "M>Train" are not comparisons.
+_JOINED_COMPARISON = re.compile(r"(?<=[\w)" + _END + _IS + r"])[<>](?=[\w(" + _SPELL + r"]|\.\d| minus \d)")
+_FIGURE_BEFORE = re.compile(r"(?<![\w.,])\d[\d.,]*%?$")
+_FIGURE_AFTER = re.compile(r"(?:\d[\d.,]*%?(?!\w)|\.\d| minus \d)")
+_LETTER_BEFORE = re.compile(r"(?:(?<![\w'’.])[A-Za-z]|[)" + _END + r"])$")
+_LETTER_AFTER = re.compile(r"(?:[A-Za-z](?![\w'’])|[(" + _SPELL + r"])")
 _SENTENCE_STARTERS = frozenset("the he she it i we they this that there but and in on at a an if when what why how who my our "
                                "you then so now after before however".split())
 _YEAR_CONTEXT = frozenset("in since by from until till before after during around circa of year early late mid summer winter "
@@ -81,7 +141,9 @@ _LEADING_APOSTROPHE = frozenset(("'em", "'tis", "'twas", "'til", "'cause", "'bou
 _EMOJI = re.compile("[\U0001F000-\U0001FAFF☀-➿\U0001F1E6-\U0001F1FF←-⇿⬀-⯿️‍⃣]+")
 _EMOTICON = re.compile(
     r"(?<![A-Za-z0-9])(?:[:;=]['^-]?[DPpOo3|/\\*\]\[}{><]+|[)(\]\[][-^']?[:;=]|<3+|</3|\^_?\^|-_-|[oO]_[oO]|>_<|T_T|\\o/|:'[()])(?![A-Za-z0-9])"
-    r"|[:;=]['^-]?[)(]+")
+    r"|[:;]['^-]?[)(]+"
+    r"|(?<![A-Za-z0-9)])=['^-]?[)(]+|=['^-]?[)(]+(?![A-Za-z0-9(.$-])"            # "=(" is a face, but not in "y=(a+b)"
+    r"|(?<=[A-Za-z]{2})<3+(?![.,]?\d)")                                          # a heart joined to a word: "you<3"
 
 # Words that say what the number after them is. A telephone number, a PIN or a
 # reference is read digit by digit; an amount is not.
@@ -350,7 +412,14 @@ class Normalizer:
                 self.exact_units[columns[0]] = (columns[1], columns[2])
             else:
                 self.units[columns[0].lower()] = (columns[1], columns[2])
-        self.chat = {columns[0]: (columns[1] if len(columns) > 1 else "-") for _, columns in tables.rows("chat.txt")}
+        # A chat spelling marked "alone" is read that way only as a reply by itself ("k", "k, thanks").
+        self.chat, self.replies = {}, set()
+        for number, columns in tables.rows("chat.txt"):
+            if len(columns) > 2 and columns[2:] != ["alone"]:
+                raise ValueError(f"chat.txt line {number}: after the words to say there can only be \"alone\"")
+            self.chat[columns[0]] = columns[1] if len(columns) > 1 else "-"
+            if len(columns) > 2:
+                self.replies.add(columns[0])
         self.endings = tables.mapping("endings.txt")
         names = sorted({re.escape(unit) for unit in list(self.units) + list(self.exact_units)}, key=lambda name: (-len(name), name))
         self._unit_names = "|".join(names)
@@ -871,11 +940,14 @@ class Normalizer:
         text = _EMOTICON.sub(" ", text)
         text = re.sub(r"\.{3,}", "…", text)
         text = re.sub(r"(?<=\d)\s-\s(?=\d[\d.,]*\s?=)", " minus ", text)
+        text = re.sub(r"(?<![\d.,/-])(\d[\d.,]*)-(?=\d[\d.,]*=)", r"\1 minus ", text)      # 10-3=7, not the date 2024-11-15=
         text = re.sub(r"-{2,}|\s-\s", "—", text)
         text = re.sub(r"\bw/o\b", " without ", text, flags=re.IGNORECASE)
         text = re.sub(r"\bw/(?=\s|$)", " with ", text, flags=re.IGNORECASE)
         text = re.sub(r"\bn/a\b", " not applicable ", text, flags=re.IGNORECASE)
         text = text.replace("'n'", " 'n ")
+        if re.search(r"[<>≥≤≠]|!=", text):
+            text = self._mark_comparisons(text)
         if re.search(r"\d", text):                          # most text has no digit and skips these passes
             text = self._figures(text)
         return self._signs(text)
@@ -963,15 +1035,80 @@ class Normalizer:
         text = re.sub(r"(?<=\d)\^(?=\d)", " to the power of ", text)
         return text
 
+    @staticmethod
+    def _named_letters(text):
+        """Mark the letters that stand for something, to be named: "a=10", "b>a", "(k)"."""
+        if not any(sign in text for sign in "=<>+*/^()≤≥≠≈×÷±"):
+            return text
+        plain = _without_angles(text)
+        places = {match.start("letter") for pattern in _LETTER_PLACES for match in pattern.finditer(plain)}
+        if not places:
+            return text
+        return "".join(f"{_SPELL}{char.upper()}{_END}" if index in places else char for index, char in enumerate(text))
+
+    @staticmethod
+    def _mark_comparisons(text):
+        """Put the mark for "is" after the first value of each comparison between
+        two values: "67 > 66", "b>a", "f(x) >= 0". Not where a word that opens no
+        clause stands before that value: "for n > 4", "any q > 0"."""
+        plain = _without_angles(text)
+
+        def mark(match):
+            before, after = plain[:match.start()], plain[match.end():]
+            value = _VALUE_BEFORE.search(before)
+            if plain[match.start("sign")] != match.group("sign")[0] or value is None or not _VALUE_AFTER.match(after):
+                return match.group(0)
+            start = value.start()
+            if value.group(0) in ")]":                      # "f(x) > 0", "a[i] < b": the whole of it is the value
+                depth = 0
+                while start >= 0:
+                    depth += (before[start] in ")]") - (before[start] in "([")
+                    if depth == 0:
+                        break
+                    start -= 1
+                while start > 0 and (before[start - 1].isalnum() or before[start - 1] in "_."):
+                    start -= 1
+            word = re.search(r"[A-Za-z']+$", before[:max(start, 0)].rstrip())
+            if word and word.group(0).lower() not in _CLAUSE_OPENERS:
+                return match.group(0)
+            return _IS + match.group(0)
+
+        return _COMPARED.sub(mark, text)
+
+    @staticmethod
+    def _compared(match, words):
+        """``words`` for a comparison sign, after "is" where the mark for it stands before the sign."""
+        marked = match.group(0).startswith(_IS) or match.string[:match.start()].rstrip(" ").endswith(_IS)
+        return f" {'is ' if marked else ''}{words} "
+
+    def _joined_comparisons(self, text):
+        """"b>a", "x<5", "p<.05": the words for "<" and ">" written with no spaces."""
+        plain = _without_angles(text)
+
+        def read(match):
+            before, after = text[:match.start()].rstrip(_IS), text[match.end():]
+            if plain[match.start()] != match.group(0):      # the bracket of a tag
+                return match.group(0)
+            if not (_FIGURE_BEFORE.search(before) or _FIGURE_AFTER.match(after)
+                    or (_LETTER_BEFORE.search(before) and _LETTER_AFTER.match(after))):
+                return match.group(0)
+            return self._compared(match, "less than" if match.group(0) == "<" else "greater than")
+
+        return _JOINED_COMPARISON.sub(read, text)
+
     def _signs(self, text):
         """The passes that follow: signs, abbreviations, and the numbers that are left."""
+        text = self._named_letters(text)
+        if "<" in text or ">" in text:
+            text = self._joined_comparisons(text)
         text = re.sub(r"(?<![\w-])(" + _SIZES + r")-(" + _SIZES + r")(?![\w-])",
                       lambda m: f" {_spelled(m.group(1))} to {_spelled(m.group(2))} ", text)
         text = re.sub(r"#(?=\d)", " number ", text)
         text = re.sub(r"#(?=[A-Z]{1,4}-?\d)", " number ", text)                 # Order #A7
         text = re.sub(r"#(?=[A-Za-z])", " hashtag ", text)
         text = re.sub(r"~(?=\s?\d)", " about ", text)
-        text = re.sub(r"(?<=[\w\s])(>=|<=|!=)(?=[\w\s])", lambda m: f" {_COMPARISONS[m.group(1)]} ", text)
+        text = re.sub(r"(?<=[\w\s" + _END + _IS + r"])(>=|<=|!=)(?=[\w\s" + _SPELL + r"])",
+                      lambda m: self._compared(m, _COMPARISONS[m.group(1)]), text)
         text = re.sub(r"(?<=\d) Ti\b", f" {_spelled('TI')}", text)              # RTX 4070 Ti
         text = re.sub(r"\b([Rr])ef\.\s?[Nn]o\.(?=\s)", r"\1eference number", text)
         text = re.sub(r"\b((?:[A-Za-z]\.){2,})", lambda m: self._dotted(m, text), text) if "." in text else text
@@ -980,9 +1117,11 @@ class Normalizer:
             text = _GLUED.sub(self._glued, text)
             text = re.sub(r"(?<![\w.])\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?|(?<![\w.])\.\d+", lambda m: self._number(m, text), text)
         text = re.sub(r"(?<=[A-Za-z])/(?=[A-Za-z])", " ", text)
-        text = re.sub(r"(?<=\d)\s?[<>]\s?(?=\d)|(?<=\s)[<>](?=\s)", lambda m: " less than " if "<" in m.group(0) else " greater than ", text)
-        text = re.sub("[" + re.escape("".join(_SYMBOL_WORDS)) + "]", lambda m: f" {_SYMBOL_WORDS[m.group(0)]} ", text)
-        return text
+        text = re.sub(r"(?<=\d)" + _IS + r"?\s?[<>]\s?(?=\d)|(?<=\s)[<>](?=\s)",
+                      lambda m: self._compared(m, "less than" if "<" in m.group(0) else "greater than"), text)
+        text = re.sub("[" + re.escape("".join(_SYMBOL_WORDS)) + "]",
+                      lambda m: self._compared(m, _SYMBOL_WORDS[m.group(0)]) if m.group(0) in "≥≤≠" else f" {_SYMBOL_WORDS[m.group(0)]} ", text)
+        return text.replace(_IS, "")
 
     # -- words --
 
@@ -1004,19 +1143,43 @@ class Normalizer:
         ordered = [cut(True, liked), cut(True, not liked), cut(False, liked), cut(False, not liked)]
         return list(dict.fromkeys(ordered))
 
+    @staticmethod
+    def _chat_words(chat, raw):
+        """Tokens for one row of the chat table: words, letters to name, or nothing."""
+        if chat == "-":
+            return []
+        return [Word(part[1:].lower(), raw=raw, spell=True) if part.startswith("*") else Word(part.lower(), raw=part)
+                for part in chat.split()]
+
+    @staticmethod
+    def _reply(out, place):
+        """True when the word at ``place`` is a clause by itself and can be a
+        reply: "k", "k, thanks", "see you there, k?". Between two commas, or with
+        a single letter next to it across a comma, it is one of a list: "i, j, k"."""
+        marks = []
+        for step in (-1, 1):
+            index = place + step
+            while 0 <= index < len(out) and isinstance(out[index], Punct) and out[index].mark in "\"'()":
+                index += step                               # quotation marks and brackets part nothing
+            if not 0 <= index < len(out):
+                marks.append("")                            # the text starts or ends here
+            elif isinstance(out[index], Word):
+                return False                                # a word in the same clause: "the value of k"
+            else:
+                marks.append(out[index].mark)
+                beyond = out[index + step] if 0 <= index + step < len(out) else None
+                if out[index].mark == "," and isinstance(beyond, Word) and len(beyond.text) == 1 and beyond.text != "i":
+                    return False
+        return marks != [",", ","]
+
     def _word_tokens(self, raw, all_caps, previous, following=True, fresh=False):
         """Tokens for one run of letters and apostrophes as written. ``previous``
         is the word before it, ``following`` whether a word follows directly,
         ``fresh`` whether a new sentence starts here."""
         lower = raw.lower()
         chat = self.chat.get(lower)
-        if chat is not None and (len(raw) > 1 or raw.islower()):
-            if chat == "-":
-                return []
-            out = []
-            for part in chat.split():
-                out.append(Word(part[1:].lower(), raw=raw, spell=True) if part.startswith("*") else Word(part.lower(), raw=part))
-            return out
+        if chat is not None and (len(raw) > 1 or raw.islower()) and lower not in self.replies:
+            return self._chat_words(chat, raw)
         if raw in _ROMAN and previous and previous[0].isupper():
             number = _ROMAN[raw]
             words = cardinal(number) if previous.lower() in _CARDINAL_AFTER else "the " + ordinal(number)
@@ -1068,6 +1231,7 @@ class Normalizer:
         previous = ""
         fresh = True                                       # a sentence starts here: "a plan. A dog" is the article
         short = []                                         # where "Ss" or "Zz" stands apart: perhaps a hiss, a snore
+        replies = []                                       # where a chat spelling stands that is read only as a reply
         for match in pattern.finditer(text):
             spelled, inline, word, number, hyphen, other = match.groups()
             before = text[match.start() - 1] if match.start() else " "
@@ -1092,6 +1256,11 @@ class Normalizer:
                 if word in ("Ss", "ss", "Zz", "zz") and len(new) == 1 and (before.isspace() or before in "\"'(") \
                         and re.match(r"[.!?…,;:—\"')]*(?:\s|$)", text[match.end():]):
                     short.append(len(out))
+                # a reply stands free: not "(k)", "/k/", "[:k]", and not before a colon or a mid-text "!" ("k: king", "k! = mk")
+                if word.lower() in self.replies and (len(word) > 1 or word.islower()) and len(new) == 1 \
+                        and (before.isspace() or before in "\"'") \
+                        and re.match(r"(?:[.?…,;—]*[\"']?(?:\s|$)|!+[\"']?\s*$)", text[match.end():]):
+                    replies.append(len(out))
             elif number is not None:
                 new = [Word(part, raw=number) for part in number_words(number).split()]
             elif other in PUNCTUATION:
@@ -1118,6 +1287,11 @@ class Normalizer:
             if all(token.text in _SOUNDS or (token.phones is not None and len(set(token.text)) == 1)
                    for token in out[first:last] if isinstance(token, Word)):
                 out[place] = out[place]._replace(phones=((out[place].text[0], 0),))
+        # "k" is "okay" as a reply by itself; beside a word or a figure it is the letter.
+        for place in reversed(replies):
+            if self._reply(out, place):
+                raw = out[place].raw
+                out[place:place + 1] = self._chat_words(self.chat[raw.lower()], raw)
         return out
 
 

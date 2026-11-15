@@ -83,7 +83,9 @@ stress, `0` for none ("sah-HOOR" is `S AA0 HH UH1 R`). Consonants are
 with `python -m dizione --words "Tung Tung Tung Sahur"`.
 
 Chat abbreviations that stand for words ("ngl", "fr", "istg") or are read as
-letters ("pov", "afk") go in `data/chat.txt` instead.
+letters ("pov", "afk") go in `data/chat.txt` instead. A row marked "alone" is
+read that way only as a reply by itself: "k" is "okay" in "k", "k, thanks" and
+"see you there, k?", and the letter K in "the value of k", "8 k" and "k = 5".
 
 The pronunciations in these tables were typed by hand for this project; none
 comes from eSpeak, misaki or Wiktionary.
@@ -136,6 +138,10 @@ names; a comma is a short break.
 | `15.11.2026`, `3-17 November`, `22 February.` | "November fifteenth twenty twenty six"; "the third to the seventeenth of November"; the full stop after a month name ends the sentence again |
 | `1½`, `2¾`, `2 1/2`, `½` | "one and a half", "two and three quarters", "two and a half", "one half" |
 | `≥ ≤ ≠ ≈ ∞ √ → ^`, `>=`, `7 − 3`, `120 m²` | "greater than or equal to", "less than or equal to", "not equal to", "approximately", "infinity", "square root of", "to", "to the power of"; "seven minus three"; "one hundred twenty square meters" |
+| `67 > 66`, `see if b>a`, `x<5`, `p<.05`, `a >= b`, `0 < x < 1` | a comparison between two values is said with "is": "sixty seven is greater than sixty six", "see if B is greater than A", "X is less than five", "A is greater than or equal to B", "zero is less than X is less than one". A value is a figure, a single letter or a closing bracket, with the same space (or none) on both sides of the sign. No "is" where the comparison only describes the value ("for n > 4", "any q > 0", "an integer k ≥ 2") or where a word stands on a side ("values > 10", "a >50% rise"): these say "greater than" as before |
+| `b>a`, `x<5`, `File>Open`, `<b>`, `map<int, int>`, `you<3` | "<" and ">" with no space are read when a figure stands on one side or a single letter or bracket on both. A menu path, a name ("M>Train"), a tag and the brackets of a type are not comparisons; "<3" after a word is a heart and is not read |
+| `a=10`, `c = a + b`, `(a)`, `f(a, b)`, `A/B`, `k = k + 1` | a letter beside a sign or alone in brackets is named: "A equals ten", "C equals A plus B". This holds for "A", "a" and the letters chat writes for a word ("k", "u", "r"); in "mode = a set of notes" and "a +1" the article stays |
+| `y=(a+b)/2`, `10-3=7` | "Y equals ( A plus B ) two": "=(" is a sad face only where no value follows it; "ten minus three equals seven" |
 | `iOS`, `macOS`, `iPadOS`, `eSIM` | "I O S", "mac O S", "I pad O S", "E sim". `iPhone`, `iPad`, `eBay`, `YouTube` are dictionary words |
 | `#A7-4419`, `KT-738-RP`, `AB-22`, `KX-300`, `gate B12`, `seat 14C`, `Pixel 8a` | "number A seven, four four one nine"; "K T, seven three eight, R P"; "A B twenty two"; "K X three hundred"; "B twelve"; "fourteen C"; "eight A". A letter next to a digit or inside a code is always named |
 | `SAVE-20`, `COVID-19`, `5-year`, `20-year-old`, `10-15`, `2019-2021` | unchanged: "save twenty", "covid nineteen", "five year", ranges with "to" |
@@ -369,7 +375,9 @@ uses the tokens of an earlier build.
   were rebuilt with the new code and are the same bytes as the released files.
 * **The corpus did not change.** All 8,749 distinct sentences of the dataset
   were phonemized with the old and the new code: tokens and stress are
-  identical in every one. So are the 166 sentences the test file had before.
+  identical in every one. So are 164 of the 166 sentences the test file had
+  before; the other two hold a comparison between two values and now say
+  "is" ("x = 5 and y < 10", "where x ≠ y").
 * **Prose can differ outside the corpus** in exactly these cases:
   the words now taught ("Emmaleigh", "Hermione", "Persephone", "coeliac",
   "celiac", "scabies", "lyssavirus", "provirus", "bobsleigh"); a word in
@@ -417,10 +425,42 @@ sentences by cause:
 One of the 64 is wrong: a formula cut in two by a sentence break ends in
 "n_0=1$", with no sign before it to show a formula, and says "one dollar".
 
+### Signs without spaces, a lone "k", and "is"
+
+Three more things were reported and changed on the same day.
+
+* **A sign with no space around it lost words.** "let a=10, b=20, see if b>a"
+  was read "let a equals ten, B equals twenty, see if B a": the ">" was
+  dropped and both "a" were the weak article, so the sentence seemed to break
+  off. It is now "let A equals ten, B equals twenty, see if B is greater than
+  A", the same as with spaces. The voice and the demo were not at fault:
+  every phoneme got its frames, and the text went to the voice in one piece.
+  At speed 0.70 the audio grew from 4.66 to 6.13 seconds.
+* **A lone "k" was always "okay".** It is the letter K now, and "okay" only
+  as a reply by itself (see `data/chat.txt`).
+* **A comparison between two values says "is"** ("sixty seven is greater than
+  sixty six"). This was asked for; it changes what the release said.
+
+The same three sets were read again. Of the 1,985,590 sentences this round
+changes 1,900, none of which fails; no word form changes.
+
+| Cause | Sentences | Example |
+|---|---|---|
+| A letter beside a sign or alone in brackets is named | 939 | "Side A = 8 cm", "gcd(a, b)", "(a) it was an Italian film", "A/C" |
+| A lone "k" is the letter, not "okay" | 563 | "the value of k", "401(k)", "k-means", "1.4k years" |
+| "Is" in a comparison between two values | 293 | "while n > 1", "when m < n", "as 4<12" |
+| "=(" is not a sad face | 51 | "A=(1,2)", "figsize=(12, 12)" |
+| "<" or ">" with no space, that was dropped, is read | 30 | "if A>B and B>C, then A>C", "if n<0" |
+| A heart joined to a word is not read | 17 | "tomorrow<3" said "tomorrow three" |
+| Minus, not "to", before "=" | 7 | "66-4=62" |
+
+Together with the table above, 2,688 of the 1,985,590 sentences and 300 of
+the 1,322,304 word forms are now read differently from the release.
+
 ## Tests
 
-`tests/test_dizione.py` (36 tests) and `tests/data/tricky_sentences.txt`
-(203 sentences: 167 with the words they must turn into, 78 stretches of phones
+`tests/test_dizione.py` (42 tests) and `tests/data/tricky_sentences.txt`
+(223 sentences: 187 with the words they must turn into, 84 stretches of phones
 that must appear). Every bug fixed has a sentence there.
 Run them with `PYTHONPATH=src python -m unittest discover -s tests`.
 
@@ -486,12 +526,22 @@ error.
    Formulas are not understood. Dollar signs around one are dropped and the
    rest is read sign by sign ("$x^2$" is "X two"); a formula that opens with
    a figure is read as a price ("$3 + 5 = 8$" starts "three dollars").
+   Comparisons: a name of several letters is not taken for a value, so
+   "age > 18" says "age greater than eighteen" with no "is", and "count<n"
+   with no space is not read at all. "*", "/" and "^" between names are
+   silent ("a*b" is "A B"), arrows ("->", "=>") are not read, and "==" says
+   "equals" twice.
 7. **Capitals decide initialisms.** "WHO" is read "who"; an unknown word of up
    to five capitals is spelled; a two-letter one the dictionary knows as a
    word is read as that word ("ET" outside a time, "CT", "PO" outside a code).
    "A" is the article unless it is next to a digit, inside a code, ends a
    clause or follows "plan", "vitamin" and the like ("gate A 22" is still the
-   article). File names say "underscore" and "dash"; "/var" is spelled; an
+   article). Beside a sign or alone in brackets "a" and "A" are named
+   ("a=10", "(a)"), but not in running words: "let A equal ten" and "k, a and
+   n" still have the article. A lone "k" is "okay" only as a reply by itself;
+   "k thanks" with no comma is the letter ("kay thanks"), and the "u" and "r"
+   of chat stay "you" and "are" wherever no sign stands beside them.
+   File names say "underscore" and "dash"; "/var" is spelled; an
    address ending that is a short common word ("about.me") is not recognised.
 8. **Linking and flaps across words** follow the training tokens: only "it"
    and "at" flap before a vowel, although American speech flaps more.

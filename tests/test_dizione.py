@@ -9,6 +9,7 @@ import importlib.util
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 
@@ -167,7 +168,7 @@ class NormalizerTests(unittest.TestCase):
                 ("Plate KT-738-RP, bug #2093.", "plate [K T] , seven three eight , [R P] , bug number two zero nine three ."),
                 ("Card 4502 1187 3390 2.", "card four five zero two , one one eight seven , three three nine zero , two ."),
                 ("Add 1½ cups.", "add one and a half cups ."),
-                ("x ≥ 5", "[X] greater than or equal to five"),
+                ("x ≥ 5", "[X] is greater than or equal to five"),
                 ("On 14/03 at 20:00.", "on march fourteenth at twenty hundred .")):
             self.assertEqual(said(normalize.tokens(written)), spoken)
         self.assertEqual(normalize.pairs(4070), "forty seventy")
@@ -190,6 +191,76 @@ class NormalizerTests(unittest.TestCase):
                 ("Pay 3,50 or 4,20 at 192.168.100.200,80.", "pay three , fifty or four , twenty at one nine two point one six eight "
                                                             "point one zero zero point two zero zero , eighty .")):
             self.assertEqual(said(normalize.tokens(written)), spoken)
+
+    def test_signs_written_without_spaces_lose_nothing(self):
+        report = "let [A] equals ten , [B] equals twenty , see if [B] is greater than [A]"
+        for written, spoken in (
+                ("let a=10, b=20, see if b>a", report),
+                ("let a = 10, b = 20, see if b > a", report),
+                ("If x>5 and y<3 then stop, since p<.05.", "if [X] is greater than five and [Y] is less than three then stop , "
+                                                           "since [P] is less than point zero five ."),
+                ("Here a>=b, a!=b and x>-1.", "here [A] is greater than or equal to [B] , [A] is not equal to [B] "
+                                              "and [X] is greater than minus one ."),
+                # "=(" opens a bracket here, it is not a sad face; and "10-3" is not a range
+                ("So y=(a+b)/2 and 10-3=7.", "so [Y] equals ( [A] plus [B] ) two and ten minus three equals seven ."),
+                ("I am sad =( and you are happy =)", "i am sad and you are happy"),
+                # a heart is not "less than three", also when it is joined to a word
+                ("See you tomorrow<3 and I <3 you, but x<3 here.", "see you tomorrow and i you , but [X] is less than three here ."),
+                # brackets that enclose, a menu and a name are not comparisons
+                ("Use <b>bold</b> or map<int, int>, then File>Open on the M>Train.",
+                 "use [B] bold [B] or map int , int , then file open on the [M] train .")):
+            self.assertEqual(said(normalize.tokens(written)), spoken)
+
+    def test_a_comparison_between_two_values_is_said_with_is(self):
+        for written, spoken in (
+                ("I think 67 > 66.", "i think sixty seven is greater than sixty six ."),
+                ("see if b > a", "see if [B] is greater than [A]"),
+                ("0 < x < 1", "zero is less than [X] is less than one"),
+                ("We know that 50% > 30% and $5 > $3.", "we know that fifty percent is greater than thirty percent "
+                                                        "and five dollars is greater than three dollars ."),
+                ("f(x) > 0 and len(deck) > 0", "[F] ( [X] ) is greater than zero and len ( deck ) is greater than zero"),
+                ("A ≥ B and C ≠ D", "[A] is greater than or equal to [B] and [C] is not equal to [D]"),
+                # one "is" is enough
+                ("Is 5 > 3? Yes, x is > 5.", "is five greater than three ? yes , [X] is greater than five ."),
+                # the comparison only describes the value
+                ("All known Fermat numbers for n>4 are composite.", "all known fermat numbers for [N] greater than four are composite ."),
+                ("For any q > 0 and some integer k ≥ 2.", "for any [Q] greater than zero and some integer [K] greater than or equal to two ."),
+                # not two values: read as before
+                ("Give it a +1 and a >50% rise.", "give it a plus one and a greater than fifty percent rise ."),
+                ("Values > 10 are dropped.", "values greater than ten are dropped ."),
+                ("Home > Products > Shoes", "home greater than products greater than shoes")):
+            self.assertEqual(said(normalize.tokens(written)), spoken)
+
+    def test_a_letter_beside_a_sign_or_alone_in_brackets_is_named(self):
+        for written, spoken in (
+                ("Let A = 10 and c = a + b.", "let [A] equals ten and [C] equals [A] plus [B] ."),
+                ("(a) the first, (b) the second", "( [A] ) the first , ( [B] ) the second"),
+                ("Call f(a, b) in the A/B test.", "call [F] ( [A] , [B] ) in the [A] [B] test ."),
+                ("Then k = k + 1 and u = r/2.", "then [K] equals [K] plus one and [U] equals [R] two ."),
+                # the article stays the article
+                ("Tom is back w/a vengeance and an A/C.", "tom is back [W] a vengeance and an [A] [C] ."),
+                ("Mode = a collection of notes.", "mode equals a collection of notes ."),
+                ("Give it a +1 and a >50% rise.", "give it a plus one and a greater than fifty percent rise ."),
+                ("What a > mistake.", "what a greater than mistake .")):
+            self.assertEqual(said(normalize.tokens(written)), spoken)
+
+    def test_a_lone_k_is_the_letter_unless_it_is_a_reply(self):
+        for written, spoken in (
+                # a clause by itself: "okay"
+                ("k", "okay"), ("k.", "okay ."), ("k, thanks", "okay , thanks"), ("See you there, k?", "see you there , okay ?"),
+                ("Sure, k.", "sure , okay ."), ("Harry: k, thx.", "harry : okay , thanks ."), ("kk", "okay"),
+                # beside a word, a figure or a sign, or in a list of letters: the letter
+                ("k is not OK", "[K] is not okay"), ("k thanks", "[K] thanks"),
+                ("k! = mk", "[K] ! equals mk"), ("- k: king", "[K] : king"), ("The sound /k/.", "the sound [K] ."),
+                ("Let k = 5, so the value of k is 5.", "let [K] equals five , so the value of [K] is five ."),
+                ("It is 8 k, not 10k.", "it is eight [K] , not ten [K] ."), ("i, j, k", "i , [J] , [K]"), ("K", "[K]"),
+                # "u" and "r" sound like their names and stay chat words
+                ("r u ok", "are you okay")):
+            self.assertEqual(said(normalize.tokens(written)), spoken)
+        rows = tables.rows
+        with patch.object(tables, "rows", lambda source: [(1, ["k", "okay", "always"])] if source == "chat.txt" else rows(source)):
+            with self.assertRaises(ValueError):
+                normalize.Normalizer()                      # only "alone" may follow the words to say
 
     def test_emoticons_and_emoji_are_neither_words_nor_pauses(self):
         for written in ("ok :))", "ok :-) <3", "ok 🙂👍", "ok :D ;) :P"):
@@ -239,7 +310,7 @@ class NormalizerTests(unittest.TestCase):
                 ("Let $x = 2$ and $E=mc^2$, so $3 + 5 = 8$.",
                  "let [X] equals two and [E] equals mc two , so three dollars plus five equals eight ."),
                 ("The variance $\\sigma^2$ with $n_0 = 1$.", "the variance sigma two with [N] zero equals one ."),
-                ("The area is $(a + b)^2$ and $c^2$.", "the area is ( a plus [B] ) two and [C] two ."),
+                ("The area is $(a + b)^2$ and $c^2$.", "the area is ( [A] plus [B] ) two and [C] two ."),
                 ("So x^2$ and 5^2 $ are not prices.", "so [X] two and five to the power of two are not prices ."),
                 ("The $F_1$-Score is 0.9.", "the [F] one +score is zero point nine ."),
                 ("An area of 1,0 m² or 1,5 m².", "an area of one point zero square meter or one point five square meters .")):
@@ -495,6 +566,21 @@ class EngineTests(unittest.TestCase):
         self.assertEqual((text("provirus"), text("proviruses")), ("p ɹ oʊ v ˈaɪ ɹ ə s", "p ɹ oʊ v ˈaɪ ɹ ə s ᵻ z"))
         engine = Phonemizer(BUILT, overrides={"emmaleigh": "EH1 M AH0", "lyssavirus": "L IH1 S AH0"})
         self.assertEqual(self.speak("Emmaleigh, lyssavirus", engine), "ˈɛ m ə , l ˈɪ s ə")      # the user's own words still win
+
+    def test_the_report_about_signs_without_spaces(self):
+        spoken = ("l ˈɛ t <sp> ˈeɪ <sp> ˈiː k w əl z <sp> t ˈɛ n , b ˈiː <sp> ˈiː k w əl z <sp> t w ˈɛ n t i , "
+                  "s ˈiː <sp> ɪ f <sp> b ˈiː <sp> ɪ z <sp> ɡ ɹ ˈeɪ ɾ ɚ <sp> ð ɐ n <sp> ˈeɪ")
+        self.assertEqual(self.speak("let a=10, b=20, see if b>a"), spoken)
+        self.assertEqual(self.speak("let a = 10, b = 20, see if b > a"), spoken)             # spaces change nothing
+        self.assertEqual(self.speak("I think 67 > 66."),
+                         "aɪ <sp> θ ˈɪ ŋ k <sp> s ˈɪ k s t i <sp> s ˈɛ v ə n <sp> ɪ z <sp> ɡ ɹ ˈeɪ ɾ ɚ <sp> ð ɐ n <sp> s ˈɪ k s t i <sp> s ˈɪ k s .")
+        self.assertIn("θ ɹ ˈiː <sp> p ˈɔɪ n t <sp> ɪ l ˈɛ v ə n", self.speak("I upgraded to Python 3.11 last week."))
+        self.assertIn("θ ɹ ˈiː <sp> p ˈɔɪ n t <sp> w ˈʌ n <sp> w ˈʌ n <sp> p ɚ s ˈɛ n t", self.speak("The price went up by 3.11 percent."))
+
+    def test_a_lone_k_is_named_and_okay_only_as_a_reply(self):
+        self.assertEqual((self.speak("k"), self.speak("k, thanks")), ("oʊ k ˈeɪ", "oʊ k ˈeɪ , θ ˈæ ŋ k s"))
+        self.assertEqual(self.speak("k is not OK"), "k ˈeɪ <sp> ɪ z <sp> n ˌɑː t <sp> oʊ k ˈeɪ")
+        self.assertIn("v ˈæ l j uː <sp> ʌ v <sp> k ˈeɪ", self.speak("the value of k"))
 
     def test_sounds_people_write_and_the_letters_that_stay_letters(self):
         self.assertEqual(self.speak("Sh! Ss! Tsk!"), "ʃ ! s ! t ˈɪ s k !")

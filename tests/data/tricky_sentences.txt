@@ -152,7 +152,7 @@ SAID: covid nineteen and [B] two [B] sales at four [K] .
 TEXT: Henry VIII and World War II.
 SAID: henry the eighth and world war two .
 TEXT: x = 5 and y < 10
-SAID: [X] equals five and [Y] less than ten
+SAID: [X] equals five and [Y] is less than ten
 
 # ---- chat text: never read as words, never a pause ----
 TEXT: lol that was funny :))
@@ -341,7 +341,7 @@ SAID: it is two and a half miles away .
 
 # ---- symbols that used to be dropped ----
 TEXT: Use a value ≥ 5 and ≤ 10, where x ≠ y and pi ≈ 3.14.
-SAID: use a value greater than or equal to five and less than or equal to ten , where [X] not equal to [Y] and pi approximately three point one four .
+SAID: use a value greater than or equal to five and less than or equal to ten , where [X] is not equal to [Y] and pi approximately three point one four .
 TEXT: The plot is 120 m² and 7 − 3 = 4.
 SAID: the plot is one hundred twenty square meters and seven minus three equals four .
 TEXT: It costs 50¢ or -€12.50.
@@ -483,7 +483,7 @@ SAID: let [X] equals two and [E] equals mc two , so three dollars plus five equa
 TEXT: The variance $\sigma^2$ with $n_0 = 1$.
 SAID: the variance sigma two with [N] zero equals one .
 TEXT: The area is $(a + b)^2$ and $c^2$.
-SAID: the area is ( a plus [B] ) two and [C] two .
+SAID: the area is ( [A] plus [B] ) two and [C] two .
 # American figures, lists and internet addresses are read as before
 TEXT: She paid $1,250.50, then 1,234 more, for rooms 1,2 and 3.
 SAID: she paid one thousand two hundred fifty dollars and fifty cents , then one thousand two hundred thirty four more , for rooms one , two and three .
@@ -533,3 +533,57 @@ PHONES: ð ɪ <sp> ɛ s ˈɛ s <sp> ˈɛ n t ɚ p ɹ ˌaɪ z
 TEXT: The counterrevolutionaries fled.
 SAID: the counterrevolutionaries fled .
 PHONES: k ˌaʊ n t ɚ ɹ ɛ v ə l ˈuː ʃ ə n ˌɛ ɹ i z
+
+# ---- a sign with no space around it loses nothing; a letter beside a sign is named ----
+TEXT: let a=10, b=20, see if b>a
+SAID: let [A] equals ten , [B] equals twenty , see if [B] is greater than [A]
+PHONES: l ˈɛ t <sp> ˈeɪ <sp> ˈiː k w əl z <sp> t ˈɛ n , b ˈiː <sp> ˈiː k w əl z <sp> t w ˈɛ n t i , s ˈiː <sp> ɪ f <sp> b ˈiː <sp> ɪ z <sp> ɡ ɹ ˈeɪ ɾ ɚ <sp> ð ɐ n <sp> ˈeɪ
+TEXT: let a = 10, b = 20, see if b > a
+SAID: let [A] equals ten , [B] equals twenty , see if [B] is greater than [A]
+PHONES: s ˈiː <sp> ɪ f <sp> b ˈiː <sp> ɪ z <sp> ɡ ɹ ˈeɪ ɾ ɚ <sp> ð ɐ n <sp> ˈeɪ
+TEXT: If x>5 and y<3 then stop, since p<.05.
+SAID: if [X] is greater than five and [Y] is less than three then stop , since [P] is less than point zero five .
+TEXT: So y=(a+b)/2 and 10-3=7.
+SAID: so [Y] equals ( [A] plus [B] ) two and ten minus three equals seven .
+TEXT: (a) the first, (b) the second
+SAID: ( [A] ) the first , ( [B] ) the second
+TEXT: Use <b>bold</b> or map<int, int>, then File>Open on the M>Train.
+SAID: use [B] bold [B] or map int , int , then file open on the [M] train .
+TEXT: I am sad =( and you are happy =)
+SAID: i am sad and you are happy
+
+# ---- a comparison between two values is said with "is" ----
+TEXT: I think 67 > 66.
+SAID: i think sixty seven is greater than sixty six .
+PHONES: s ˈɛ v ə n <sp> ɪ z <sp> ɡ ɹ ˈeɪ ɾ ɚ <sp> ð ɐ n <sp> s ˈɪ k s t i <sp> s ˈɪ k s
+TEXT: see if b > a
+SAID: see if [B] is greater than [A]
+PHONES: s ˈiː <sp> ɪ f <sp> b ˈiː <sp> ɪ z <sp> ɡ ɹ ˈeɪ ɾ ɚ <sp> ð ɐ n <sp> ˈeɪ
+TEXT: Is 5 > 3? Yes, x is > 5.
+SAID: is five greater than three ? yes , [X] is greater than five .
+TEXT: All known Fermat numbers for n>4 are composite.
+SAID: all known fermat numbers for [N] greater than four are composite .
+TEXT: Values > 10 are dropped, and it is a >50% rise.
+SAID: values greater than ten are dropped , and it is a greater than fifty percent rise .
+
+# ---- "k" is the letter; as a reply by itself it is "okay" ----
+TEXT: k
+SAID: okay
+PHONES: oʊ k ˈeɪ
+TEXT: k, thanks
+SAID: okay , thanks
+TEXT: See you there, k?
+SAID: see you there , okay ?
+TEXT: k is not OK
+SAID: [K] is not okay
+PHONES: k ˈeɪ <sp> ɪ z <sp> n ˌɑː t <sp> oʊ k ˈeɪ
+TEXT: Let k = 5, so the value of k is 5.
+SAID: let [K] equals five , so the value of [K] is five .
+TEXT: It is 8 k, not 10k.
+SAID: it is eight [K] , not ten [K] .
+
+# ---- versions and decimals people tested: read as before ----
+TEXT: I upgraded to Python 3.11 last week.
+SAID: i upgraded to python three point eleven last week .
+TEXT: The price went up by 3.11 percent.
+SAID: the price went up by three point one one percent .

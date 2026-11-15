@@ -4,6 +4,10 @@
 #   words to say            btw -> by the way
 #   *LETTERS                read letter by letter: lol -> L O L
 #   -                       say nothing
+# A third column, "alone", keeps a spelling for replies: it is read this way
+# only when it is a clause by itself ("k", "k, thanks", "see you, k?"). Next
+# to a word or a figure it is what was typed: in "the value of k" and "8 k"
+# the letter K.
 # Emoticons such as :) and :)) and emoji are removed before this table is used;
 # they are never read and never make a pause.
 
@@ -56,7 +60,7 @@ pics      pics
 u         you
 ur        your
 r         are
-k         okay
+k         okay      alone
 kk        okay
 ok        okay
 nvm       never mind
