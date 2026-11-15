@@ -436,6 +436,14 @@ SAID: the coronavirus and a rotavirus are not a poxvirus .
 PHONES: k ɚ ɹ ˈoʊ n ə v ˌaɪ ɹ ə s
 PHONES: ɹ ˈoʊ ɾ ə v ˌaɪ ɹ ə s
 PHONES: p ˈɑː k s v aɪ ɹ ə s
+# two words those rules would get wrong are taught
+TEXT: The bobsleigh team has two bobsleighs.
+SAID: the bobsleigh team has two bobsleighs .
+PHONES: b ˈɑː b s l eɪ <sp> t ˈiː m
+PHONES: b ˈɑː b s l eɪ z
+TEXT: A provirus and two proviruses.
+SAID: a provirus and two proviruses .
+PHONES: p ɹ oʊ v ˈaɪ ɹ ə s <sp> æ n d <sp> t ˈuː <sp> p ɹ oʊ v ˈaɪ ɹ ə s ᵻ z
 
 # ---- "read" joined to "well" by a hyphen is the past form ----
 TEXT: She's a well-read girl.
@@ -460,6 +468,22 @@ TEXT: Only 0,99 €, or £3,99, or 12,50 kg for 5-10 €.
 SAID: only ninety nine cents , or three pounds and ninety nine pence , or twelve point five zero kilograms for five to ten euros .
 TEXT: A loss of -1.299,50 €.
 SAID: a loss of minus one thousand two hundred ninety nine euros and fifty cents .
+# a currency sign after the amount, with or without spaces between the thousands
+TEXT: I paid 100$ and 20 $, then 5 $, 10 $ and 3 £.
+SAID: i paid one hundred dollars and twenty dollars , then five dollars , ten dollars and three pounds .
+TEXT: From $5 to 30$, or 1.25$ to 1.40$.
+SAID: from five dollars to thirty dollars , or one dollar and twenty five cents to one dollar and forty cents .
+TEXT: A budget of 750 000 $, 51 243 € each, 1 299,50 € more.
+SAID: a budget of seven hundred fifty thousand dollars , fifty one thousand two hundred forty three euros each , one thousand two hundred ninety nine euros and fifty cents more .
+TEXT: An area of 1,0 m² or 1,5 m².
+SAID: an area of one point zero square meter or one point five square meters .
+# the sign that closes a formula is not a currency: formulas are read as before
+TEXT: Let $x = 2$ and $E=mc^2$, so $3 + 5 = 8$.
+SAID: let [X] equals two and [E] equals mc two , so three dollars plus five equals eight .
+TEXT: The variance $\sigma^2$ with $n_0 = 1$.
+SAID: the variance sigma two with [N] zero equals one .
+TEXT: The area is $(a + b)^2$ and $c^2$.
+SAID: the area is ( a plus [B] ) two and [C] two .
 # American figures, lists and internet addresses are read as before
 TEXT: She paid $1,250.50, then 1,234 more, for rooms 1,2 and 3.
 SAID: she paid one thousand two hundred fifty dollars and fifty cents , then one thousand two hundred thirty four more , for rooms one , two and three .
@@ -470,21 +494,40 @@ SAID: port one nine two point one six eight point one zero zero point two zero z
 
 # ---- sounds people write are said as sounds, not letter by letter ----
 TEXT: Sh! Ss! Tsk!
-SAID: sh ! ss ! tsk !
+SAID: sh ! {s} ! tsk !
 PHONES: ʃ ! s ! t ˈɪ s k !
+TEXT: Sh Ss Tsk
+SAID: sh {s} tsk
+PHONES: ʃ <sp> s <sp> t ˈɪ s k
 TEXT: Psst, over here. Pfft, no way. Hmph, fine. Zzz.
-SAID: psst , over here . pfft , no way . hmph , fine . zzz .
+SAID: psst , over here . pfft , no way . hmph , fine . {z} .
 PHONES: p s t , ˌoʊ v ɚ <sp> h ˈɪɹ . p f t , n ˈoʊ <sp> w ˈeɪ . h ˈʌ m f , f ˈaɪ n . z .
 TEXT: Mm, mmm, mmmm. Sss. Tsk-tsk.
-SAID: mm , mm , mm . ss . tsk +tsk .
+SAID: mm , mm , mm . {s} . tsk +tsk .
 PHONES: m , m , m . s . t ˈɪ s k t ˈɪ s k .
-# in capitals "SS" and "ZZ" are letters, also in a text typed in capitals
+TEXT: "Ss!" went the snake. Zz.
+SAID: " {s} ! " went the snake . {z} .
+PHONES: " s ! " w ɛ n t <sp> ð ə <sp> s n ˈeɪ k . z .
+# "ss" beside a word, in capitals or inside a longer word is two letters, as it always was
 TEXT: The SS Great Britain and ZZ Top.
-SAID: the [S S] great britain and [Z Z] top .
-PHONES: ð ɪ <sp> ˌɛ s ˈɛ s <sp> ɡ ɹ ˈeɪ t
+SAID: the ss great britain and [Z Z] top .
+PHONES: ð ɪ <sp> ɛ s ˈɛ s <sp> ɡ ɹ ˈeɪ t
+PHONES: z ˌiː z ˈiː <sp> t ˈɑː p
 TEXT: THE SS OFFICERS SAID PSST AND TSK.
-SAID: the [S S] officers said psst and tsk .
-PHONES: s ˈɛ d <sp> p s t <sp> æ n d <sp> t ˈɪ s k
+SAID: the ss officers said psst and tsk .
+PHONES: ð ɪ <sp> ɛ s ˈɛ s <sp> ˈɔ f ɪ s ɚ z <sp> s ˈɛ d <sp> p s t <sp> æ n d <sp> t ˈɪ s k
+TEXT: Two SSDs, three VHSs and an iSS.
+SAID: two ss +ds , three [V H] +ss and an [I] +ss .
+PHONES: t ˈuː <sp> ɛ s ˈɛ s d ˌiː ˈɛ s , θ ɹ ˈiː <sp> v ˌiː ˈeɪ tʃ ɛ s ˈɛ s <sp> æ n d <sp> ɐ n <sp> ˈaɪ ɛ s ˈɛ s
+TEXT: The format is HH:mm:ss.
+SAID: the format is [H H] : mm : ss .
+PHONES: ˌeɪ tʃ ˈeɪ tʃ : m : ɛ s ˈɛ s
+TEXT: In German ß is written ss.
+SAID: in german ss is written ss .
+PHONES: dʒ ˈɜː m ə n <sp> ɛ s ˈɛ s <sp> ɪ z <sp> ɹ ˈɪ ʔ n̩ <sp> ɛ s ˈɛ s
+TEXT: He boarded the ss enterprise.
+SAID: he boarded the ss enterprise .
+PHONES: ð ɪ <sp> ɛ s ˈɛ s <sp> ˈɛ n t ɚ p ɹ ˌaɪ z
 
 # ---- the voice was reported to drop a syllable here: the phones have all of them ----
 TEXT: The counterrevolutionaries fled.

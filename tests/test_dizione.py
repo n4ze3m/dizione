@@ -212,13 +212,38 @@ class NormalizerTests(unittest.TestCase):
         self.assertEqual(normalize.Normalizer._unstretched("mmmm")[0], "mm")       # the hum, not the letter M
         self.assertEqual(normalize.Normalizer._unstretched("sirr"), [])
 
-    def test_capitals_that_are_letters(self):
+    def test_a_hiss_and_a_snore_only_where_they_stand_apart(self):
         tokens = normalize.tokens                           # every spelling counts as a word here
-        self.assertEqual(said(tokens("The US and IT teams met the SS Great Britain.")),
-                         "the [U S] and [I T] teams met the [S S] great britain .")
-        # In a text typed in capitals a word is a word; "SS" and "ZZ" are never the hiss and the snore.
-        self.assertEqual(said(tokens("IT IS A LED SIGN, NOT THE SS OR ZZ TOP.")), "it is a led sign , not the [S S] or [Z Z] top .")
-        self.assertEqual(said(tokens("Ss, zz, tsk.")), "ss , zz , tsk .")
+        self.assertEqual(said(tokens("Sh! Ss! Tsk!")), "sh ! {s} ! tsk !")
+        self.assertEqual(said(tokens("Sh ss tsk, Sss, Zz. Zzzz")), "sh {s} tsk , {s} , {z} . {z}")
+        self.assertEqual(said(tokens('"Ss!" she hissed.')), '" {s} ! " she hissed .')
+        # Beside a word, joined to a mark or in capitals, the letters are read as they always were.
+        for written, spoken in (("The format is mm:ss.", "the format is mm : ss ."), ("the ss uniforms", "the ss uniforms"),
+                                ("Write ss here.", "write ss here ."), ("p*ss", "[P] ss"), ("return ss.str()", "return ss . str ( )"),
+                                ('He wrote "ss" there.', 'he wrote " ss " there .'),
+                                ("SS and ZZ", "ss and zz"), ("SSDs", "ssds"), ("catching some zzz's", "catching some zzz's")):
+            self.assertEqual(said(tokens(written)), spoken)
+        self.assertEqual(said(tokens("THE SSS SOUND IS LOUD")), "the {s} sound is loud")       # a text typed in capitals
+
+    def test_a_currency_sign_after_the_amount(self):
+        for written, spoken in (
+                ("I paid 100$ and 20 $, then 5 $, 10 $ and 3 £.",
+                 "i paid one hundred dollars and twenty dollars , then five dollars , ten dollars and three pounds ."),
+                ("From $5 to 30$, or 1.25$ to 1.40$.",
+                 "from five dollars to thirty dollars , or one dollar and twenty five cents to one dollar and forty cents ."),
+                # thousands parted by spaces
+                ("A budget of 750 000 $, 51 243 € each, 1 299,50 € more.",
+                 "a budget of seven hundred fifty thousand dollars , fifty one thousand two hundred forty three euros each , "
+                 "one thousand two hundred ninety nine euros and fifty cents more ."),
+                # the sign that closes a formula is not a currency: these are read as before
+                ("Let $x = 2$ and $E=mc^2$, so $3 + 5 = 8$.",
+                 "let [X] equals two and [E] equals mc two , so three dollars plus five equals eight ."),
+                ("The variance $\\sigma^2$ with $n_0 = 1$.", "the variance sigma two with [N] zero equals one ."),
+                ("The area is $(a + b)^2$ and $c^2$.", "the area is ( a plus [B] ) two and [C] two ."),
+                ("So x^2$ and 5^2 $ are not prices.", "so [X] two and five to the power of two are not prices ."),
+                ("The $F_1$-Score is 0.9.", "the [F] one +score is zero point nine ."),
+                ("An area of 1,0 m² or 1,5 m².", "an area of one point zero square meter or one point five square meters .")):
+            self.assertEqual(said(normalize.tokens(written)), spoken)
 
 
 class SentenceTests(unittest.TestCase):
@@ -466,14 +491,21 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(word("norovirus")[1], "model")                     # the first part is a guess, "virus" is not
         self.assertTrue(text("norovirus").endswith("v ˌaɪ ɹ ə s"))
         self.assertEqual((word("virus")[1], word("antivirus")[1]), ("dictionary", "dictionary"))
+        self.assertEqual((text("bobsleigh"), text("bobsleighs")), ("b ˈɑː b s l eɪ", "b ˈɑː b s l eɪ z"))      # a sleigh, not a name
+        self.assertEqual((text("provirus"), text("proviruses")), ("p ɹ oʊ v ˈaɪ ɹ ə s", "p ɹ oʊ v ˈaɪ ɹ ə s ᵻ z"))
         engine = Phonemizer(BUILT, overrides={"emmaleigh": "EH1 M AH0", "lyssavirus": "L IH1 S AH0"})
         self.assertEqual(self.speak("Emmaleigh, lyssavirus", engine), "ˈɛ m ə , l ˈɪ s ə")      # the user's own words still win
 
-    def test_sounds_people_write_and_the_capitals_that_stay_letters(self):
+    def test_sounds_people_write_and_the_letters_that_stay_letters(self):
         self.assertEqual(self.speak("Sh! Ss! Tsk!"), "ʃ ! s ! t ˈɪ s k !")
+        self.assertEqual(self.speak("Sh Ss Tsk"), "ʃ <sp> s <sp> t ˈɪ s k")
         self.assertEqual(self.speak("Sss. Zzzz. Mmmm. Pssst."), "s . z . m . p s t .")
-        self.assertEqual(self.speak("The SS and ZZ Top"), "ð ɪ <sp> ˌɛ s ˈɛ s <sp> æ n d <sp> z ˌiː z ˈiː <sp> t ˈɑː p")
-        self.assertEqual(self.speak("THE SS MEN SAID TSK AND PSST"), "ð ɪ <sp> ˌɛ s ˈɛ s <sp> m ˈɛ n <sp> s ˈɛ d <sp> t ˈɪ s k <sp> æ n d <sp> p s t")
+        # "ss" beside a word, in capitals or inside a longer word is two letters, as the dictionary has it
+        self.assertEqual(self.speak("The SS and ZZ Top"), "ð ɪ <sp> ɛ s ˈɛ s <sp> æ n d <sp> z ˌiː z ˈiː <sp> t ˈɑː p")
+        self.assertIn("ɛ s ˈɛ s d ˌiː ˈɛ s", self.speak("Two SSDs"))
+        self.assertIn("m : ɛ s ˈɛ s", self.speak("The format is HH:mm:ss."))
+        self.assertIn("ð ɪ <sp> ɛ s ˈɛ s <sp> ˈɛ n t ɚ p ɹ ˌaɪ z", self.speak("He boarded the ss enterprise."))
+        self.assertEqual(self.speak("THE SS MEN SAID TSK AND PSST"), "ð ɪ <sp> ɛ s ˈɛ s <sp> m ˈɛ n <sp> s ˈɛ d <sp> t ˈɪ s k <sp> æ n d <sp> p s t")
 
     def test_a_hyphen_before_read_decides_the_past_form(self):
         choose = self.phonemizer.homographs.choose

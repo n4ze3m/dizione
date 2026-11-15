@@ -65,8 +65,8 @@ _SYMBOL_WORDS = {"&": "and", "@": "at", "+": "plus", "=": "equals", "%": "percen
 _COMPARISONS = {">=": "greater than or equal to", "<=": "less than or equal to", "!=": "not equal to"}
 # Capitals read letter by letter although they also spell a word.
 _INITIALISMS = frozenset("US IT AI ID UN EU UK LA AD BC AM PM OS PE PA MA LED SAT RIP ER".split())
-# Always letters in capitals, also in a text typed in capitals: in small letters they are a hiss and a snore.
-_LETTER_CAPITALS = frozenset(("SS", "ZZ"))
+# Sounds written without a vowel. "Ss" among them, or alone, is a hiss ("Sh! Ss! Tsk!").
+_SOUNDS = frozenset("sh shh ss zz hm hmm mm tsk psst pfft hmph psh pssh".split())
 _SENTENCE_STARTERS = frozenset("the he she it i we they this that there but and in on at a an if when what why how who my our "
                                "you then so now after before however".split())
 _YEAR_CONTEXT = frozenset("in since by from until till before after during around circa of year early late mid summer winter "
@@ -122,9 +122,12 @@ _HALF_DAY = r"(?:\s?([AaPp])\.[Mm]\.?|\s?([AaPp])[Mm]\b)"
 _AMOUNT = r"(?P<whole>\d{1,3}(?:,\d{3})+|\d+)(?:\.(?P<fraction>\d+))?"
 _MONEY = re.compile(r"(?:(?<![\w.])(?P<minus>-)\s?)?(?P<symbol>[$£€¥₹]|(?<![A-Za-z])(?:" + _CURRENCY_CODES + r")(?![A-Za-z]))\s?"
                     r"(?P<inner>-)?" + _AMOUNT + r"(?:\s?(?P<scale>thousand|million|billion|trillion|bn|[kKmMbB])(?![A-Za-z]))?")
-# A currency written after the amount: "20 €", "20€", "12.50 EUR".
+# A currency written after the amount: "20 €", "20€", "12.50 EUR". Those who write
+# it there often part the thousands with spaces: "750 000 $".
 _SIGN_AFTER = r"[$£€¥₹](?![\w$£€¥₹])|(?:" + _CURRENCY_CODES + r")(?![A-Za-z])"
-_MONEY_AFTER = re.compile(r"(?:(?<![\w.])(?P<minus>-)\s?)?(?<![\w.,])" + _AMOUNT + r"\s?(?P<symbol>" + _SIGN_AFTER + r")")
+_MONEY_AFTER = re.compile(r"(?:(?<![\w.])(?P<minus>-)\s?)?(?<![\w.,^])"
+                          r"(?P<whole>\d{1,3}(?:,\d{3})+|[1-9]\d{0,2}(?: \d{3})+|\d+)(?:\.(?P<fraction>\d+))?"
+                          r"\s?(?P<symbol>" + _SIGN_AFTER + r")")
 _RANGE_BEFORE_SIGN = re.compile(r"(?<![\w.,-])(\d[\d,]*(?:\.\d+)?)-(?=\d[\d,]*(?:\.\d+)?\s?(?:" + _SIGN_AFTER + r"))")
 # Figures written the continental way: a point between the thousands and a comma
 # before the decimals ("1.299,50"). Without the points a comma is a decimal
@@ -133,6 +136,15 @@ _RANGE_BEFORE_SIGN = re.compile(r"(?<![\w.,-])(\d[\d,]*(?:\.\d+)?)-(?=\d[\d,]*(?
 _CONTINENTAL = re.compile(r"(?<![\w.,])([1-9]\d{0,2}(?:\.\d{3})+),(\d{1,2})(?!\d|[.,]\d)")
 _COMMA_AFTER_SIGN = re.compile(r"((?:[$£€¥₹]|(?<![A-Za-z])(?:" + _CURRENCY_CODES + r"))\s?-?\d+),(\d{1,2})(?!\d|[.,]\d)")
 _COMMA_BEFORE_SIGN = re.compile(r"(?<![\w.,])(\d+),(\d{1,2})(?=\s?(?:%|" + _SIGN_AFTER + r"))")
+# "$x = 2$", "$3 + 5 = 8$": the sign after the last figure closes a formula, it is
+# not a currency written after an amount. A formula opens with a sign before a
+# letter, or before a figure or a space when a "=" or the like follows; "from $5
+# to 30$" is two prices, and the sign in "5 $, 10 $" opens nothing. The closing
+# sign becomes a mark no rule knows, so the rest is read as it was before.
+_FORMULA_SIGN = chr(0xE004)
+_FORMULA_END = re.compile(r"(?<![\w$])(?<!\d\s)\$(?:(?=[^\s\d$.,;:!?)])[^$\n]{0,80}"
+                          r"|(?=\d)[^$\n]{0,80}[=^_\\{}+*/<>][^$\n]{0,80}"
+                          r"|(?=\s)[^$\n]{0,80}[=^_\\{}+*<>][^$\n]{0,80})\d\s?\$(?![\w$])")
 _VULGAR = re.compile(r"(?<![\d.,/])(?:(\d+)\s?)?([½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅐⅛⅜⅝⅞⅑⅒])")
 _ADDRESS = re.compile(
     r"(?P<url>(?:https?://|www\.)[^\s<>\"']+)"
@@ -377,7 +389,8 @@ class Normalizer:
 
     def _money(self, match):
         found = match.groupdict()
-        words = self._amount(found["symbol"], found["whole"].replace(",", ""), found["fraction"], found.get("scale"))
+        whole = found["whole"].replace(",", "").replace(" ", "")
+        words = self._amount(found["symbol"], whole, found["fraction"], found.get("scale"))
         return (" minus " if found.get("minus") or found.get("inner") else " ") + words + " "
 
     @staticmethod
@@ -558,7 +571,8 @@ class Normalizer:
         unit = match.group(2)
         one, many = {"in": ("inch", "inches")}.get(unit) or self.exact_units.get(unit) or self.units[unit]
         kind = "square" if match.group(3) in "²2" else "cubic"
-        return f" {number_words(_decimal_comma(match.group(1)))} {kind} {one if match.group(1) in ('1', '1.0') else many} "
+        value = _decimal_comma(match.group(1))
+        return f" {number_words(value)} {kind} {one if value in ('1', '1.0') else many} "
 
     def _counted(self, text, end):
         """True when a plural noun follows a number: it is then an amount, not a reference."""
@@ -869,6 +883,7 @@ class Normalizer:
     def _figures(self, text):
         """The passes that need a digit: money, times, dates, telephone numbers,
         versions, codes, units, fractions, ranges."""
+        text = _FORMULA_END.sub(lambda match: match.group(0)[:-1] + _FORMULA_SIGN, text)
         # continental figures become American ones, so every rule below sees one notation
         text = _CONTINENTAL.sub(self._continental, text)
         text = _COMMA_AFTER_SIGN.sub(r"\1.\2", text)
@@ -977,8 +992,7 @@ class Normalizer:
         three times or more is cut to one or to two: at the end of a word one is
         the usual spelling ("sooo", "heyyy") unless the letter is one that
         doubles there ("alll", "offf"); inside a word two ("goood", "cooool").
-        A word that is one letter typed over and over is tried with two first:
-        "mmm" is the hum "mm", not the letter M."""
+        "mmm" is tried with two first: it is the hum "mm", not the letter M."""
         if not re.search(r"(.)\1\1", word):
             return []
         def cut(double_inside, double_final):
@@ -986,7 +1000,7 @@ class Normalizer:
                 final = match.end() == len(word)
                 return match.group(1) * (2 if (double_final if final else double_inside) else 1)
             return re.sub(r"(.)\1{2,}", replace, word)
-        liked = bool(re.search(r"([lfsz])\1\1+$", word)) or len(set(word)) == 1 or re.sub(r"(.)\1{2,}$", r"\1", word) == "to"
+        liked = bool(re.search(r"([lfsz])\1\1+$", word)) or set(word) == {"m"} or re.sub(r"(.)\1{2,}$", r"\1", word) == "to"
         ordered = [cut(True, liked), cut(True, not liked), cut(False, liked), cut(False, not liked)]
         return list(dict.fromkeys(ordered))
 
@@ -1016,9 +1030,10 @@ class Normalizer:
             if stem in ("a", "A", "I", "i") and not possessive and not label:
                 return [Word(stem.lower(), raw=raw)]
             return [Word(lower, raw=raw, spell=True)]
-        if stem.isupper() and stem.isalpha() and 2 <= len(stem) <= 5:
-            known = self.is_word(stem.lower()) and stem not in _LETTER_CAPITALS
-            if not known or (stem in _INITIALISMS and not all_caps):
+        if len(stem) > 2 and stem[0] in "SsZz" and len(set(lower)) == 1 and (all_caps or not stem.isupper()):
+            return [Word(lower, raw=raw, phones=((lower[0], 0),))]             # "Sss", "Zzzz": a hiss, a snore
+        if stem.isupper() and stem.isalpha() and 2 <= len(stem) <= 5 and (not all_caps or not self.is_word(stem.lower())):
+            if stem in _INITIALISMS or not self.is_word(stem.lower()):
                 return [Word(lower, raw=raw, spell=True)]
         if not letters.isalpha():
             return []
@@ -1052,6 +1067,7 @@ class Normalizer:
         attach = False
         previous = ""
         fresh = True                                       # a sentence starts here: "a plan. A dog" is the article
+        short = []                                         # where "Ss" or "Zz" stands apart: perhaps a hiss, a snore
         for match in pattern.finditer(text):
             spelled, inline, word, number, hyphen, other = match.groups()
             before = text[match.start() - 1] if match.start() else " "
@@ -1073,6 +1089,9 @@ class Normalizer:
                     word = word[1:]
                 new = self._word_tokens(word, all_caps, previous, re.match(r"\s*[A-Za-z]", text[match.end():]) is not None, fresh)
                 previous = word
+                if word in ("Ss", "ss", "Zz", "zz") and len(new) == 1 and (before.isspace() or before in "\"'(") \
+                        and re.match(r"[.!?…,;:—\"')]*(?:\s|$)", text[match.end():]):
+                    short.append(len(out))
             elif number is not None:
                 new = [Word(part, raw=number) for part in number_words(number).split()]
             elif other in PUNCTUATION:
@@ -1087,6 +1106,18 @@ class Normalizer:
             out.extend(new)
             attach = False
             fresh = fresh and not new
+        # "Ss!" and "Sh, ss, tsk" are a hiss. Beside an ordinary word the two letters
+        # stay letters, as in "the ss", "mm:ss" and a variable named ss. Quotation
+        # marks and brackets do not part them from that word: "written as 'ss'".
+        for place in short:
+            first, last = place, place + 1
+            while first and (isinstance(out[first - 1], Word) or out[first - 1].mark in "\"'()"):
+                first -= 1
+            while last < len(out) and (isinstance(out[last], Word) or out[last].mark in "\"'()"):
+                last += 1
+            if all(token.text in _SOUNDS or (token.phones is not None and len(set(token.text)) == 1)
+                   for token in out[first:last] if isinstance(token, Word)):
+                out[place] = out[place]._replace(phones=((out[place].text[0], 0),))
         return out
 
 

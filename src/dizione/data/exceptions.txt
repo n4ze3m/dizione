@@ -117,13 +117,12 @@ coeliac       S IY1 L IY0 AE2 K
 celiac        S IY1 L IY0 AE2 K
 scabies       S K EY1 B IY0 Z
 lyssavirus    L IH1 S AH0 V AY2 R AH0 S
+provirus      P R OW0 V AY1 R AH0 S
+bobsleigh     B AA1 B S L EY2
 
 # sounds people write: said as the sound, not letter by letter
-# ("sh", "shh", "hm", "hmm" and "mm" are in the dictionary; in capitals "SS"
-# and "ZZ" stay letters)
-ss            S
-zz            Z
-zzz           Z
+# ("sh", "shh", "hm", "hmm" and "mm" are in the dictionary; the text rules
+# read a hiss and a snore, "Ss!" and "Zzz": "ss" is also two letters)
 tsk           T IH1 S K
 psst          P S T
 pfft          P F T

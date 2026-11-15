@@ -44,10 +44,10 @@ New words appear faster than dictionaries: names, slang, memes. Three places
 take a pronunciation, from the most to the least lasting:
 
 1. **For everyone:** a line in `src/dizione/data/exceptions.txt`
-   (word, two spaces, pronunciation). 220 words are there now, among them 55
+   (word, two spaces, pronunciation). 219 words are there now, among them 55
    of today's slang ("skibidi", "rizz", "delulu", "lowkey", "bussin"), 43
-   meme names ("tralalero", "bombardiro", "sahur") and 9 sounds people write
-   ("tsk", "psst", "ss"). No rebuild is needed.
+   meme names ("tralalero", "bombardiro", "sahur") and 6 sounds people write
+   ("tsk", "psst", "pfft"). No rebuild is needed.
 2. **For you:** your own file, named by `DIZIONE_OVERRIDES`, or
    `Phonemizer(overrides={...})`. Same format; it wins over the built-in list.
 3. **For one sentence:** braces in the text, as above.
@@ -96,7 +96,7 @@ comes from eSpeak, misaki or Wiktionary.
 | 2. Your overrides, inline phonemes, taught names | `engine.py`, `data/exceptions.txt` | Win over everything. |
 | 3. Function words and groups | `sentence.py`, `data/function_words.txt`, `data/phrases.txt` | 160 function words have a weak form and a stress class; 49 pairs such as "of the" are spoken as one word. |
 | 4. Homographs | `homographs.py`, `data/homograph_rules.txt` | "read", "live", "use", "record": hand rules for a few grammar-driven cases, then a linear classifier on the neighbouring words. |
-| 5. Dictionary | `convert.py`, `align.py`, `data/exceptions.txt` | 124,926 words from CMUdict, converted to the TTS phones by rule when the data is built. 220 hand-written exceptions (recent words, slang, names, sounds, usual pronunciations), one of them a name of several words. |
+| 5. Dictionary | `convert.py`, `align.py`, `data/exceptions.txt` | 124,926 words from CMUdict, converted to the TTS phones by rule when the data is built. 219 hand-written exceptions (recent words, slang, names, sounds, usual pronunciations), one of them a name of several words. |
 | 6. Word endings | `morphology.py` | Plurals, possessives, -ed, -ing, -ly and other regular endings, some prefixes, compounds of two dictionary words, British spellings. |
 | 7. Words put together from parts | `engine.py` | Two kinds of new word the model reads badly. A name in "-leigh" is said like the same name in "-ley" ("Kayleigh", "Ryleigh"). A word in "-virus" is its first part, from the dictionary or the model, and then "virus" ("coronavirus"). |
 | 8. Unknown-word model | `g2p.py` | Letters to phonemes in one forward pass (NumPy). |
@@ -147,7 +147,8 @@ names; a comma is a short break.
 | `20:00`, `14:30`, `14:00-16:00`, `7.30 pm`, `4 p.m. ET` | "twenty hundred", "fourteen thirty", "fourteen hundred to sixteen hundred", "seven thirty P M", "four P M E T" |
 | `16:9`, `3:1`, `1:25,000` | "sixteen to nine", "three to one", "one to twenty five thousand" |
 | `-€12.50`, `50¢`, `CHF 28` | "minus twelve euros and fifty cents", "fifty cents", "twenty eight Swiss francs" |
-| `20 €`, `20€`, `5-10 €`, `-3 €` | a currency sign after the amount: "twenty euros", "five to ten euros", "minus three euros" |
+| `20 €`, `20€`, `100$`, `5-10 €`, `-3 €`, `750 000 $` | a currency sign after the amount: "twenty euros" (twice), "one hundred dollars", "five to ten euros", "minus three euros", "seven hundred fifty thousand dollars" (before such a sign, spaces may part the thousands). The second sign of a formula is not one: `$x = 2$` is "X equals two" |
+| `Ss!`, `Sss`, `Zzzz`, `Sh, ss, tsk` | a hiss and a snore: a letter s or z typed three times or more, or twice when it stands alone or among other sounds. In `mm:ss`, `the ss`, `SS` and `SSDs` the two letters are letters |
 | `1.299,50`, `€1.299,50`, `1.299,50 €`, `12,50 EUR`, `3,5%`, `1,5 kg` | figures written the continental way: "one thousand two hundred ninety nine point five zero"; "one thousand two hundred ninety nine euros and fifty cents" (twice); "twelve euros and fifty cents"; "three point five percent"; "one point five kilograms". A comma is read as a decimal comma only where the form leaves no doubt: after thousands parted by points, next to a currency or a percent sign, or before a unit. `1,2 and 3` stays a list and `2.500` stays "two point five zero zero" |
 | `3.5 m`, `1.5 L`, `180 hp`, `2 tsp`, `5,000 mAh`, `30 min. by bus` | meters, liters, horsepower, teaspoons, milliamp hours; the stop after a unit is not a sentence end before a small letter. One-letter units are read in one letter case only (`data/units.txt`): `5G` and `5 M` are not units |
 | `3 × 4 metres`, `2 m × 1 m` | "three by four metres", "two meters by one meter" |
@@ -362,35 +363,64 @@ uses the tokens of an earlier build.
   `text.frontend_fingerprint()` is still `c729f235…7b69d4da`: version 4 and
   the 76 symbols are as they were. The released checkpoint loads and speaks
   with this build.
-* **The build fingerprint did change**, as with any edit:
-  `identity()["fingerprint"]` went from `35f4abab…33bbb39c` to
-  `82d0361d…05fc5d7f`.
+* **The build fingerprint did change**, as with any edit to the source.
+  `identity()["fingerprint"]` was `35f4abab…33bbb39c` in the release.
 * **The built data did not change.** The dictionary and the homograph weights
   were rebuilt with the new code and are the same bytes as the released files.
 * **The corpus did not change.** All 8,749 distinct sentences of the dataset
   were phonemized with the old and the new code: tokens and stress are
   identical in every one. So are the 166 sentences the test file had before.
-* **One existing output changed.** "SS" in capitals was read through the
-  dictionary's entry (`ɛ s ˈɛ s`) and is now named letter by letter like any
-  other initialism (`ˌɛ s ˈɛ s`): the first letter gains a lesser stress.
 * **Prose can differ outside the corpus** in exactly these cases:
   the words now taught ("Emmaleigh", "Hermione", "Persephone", "coeliac",
-  "celiac", "scabies", "lyssavirus"); a word in "-leigh" or in "-virus" that
-  the dictionary and the ending rules do not know; "read" after a hyphen and
-  one of the fifteen words of the new rule; the sounds "ss", "zz", "tsk",
-  "psst", "pfft", "hmph", "psh", "pssh" in small letters or in capitals
-  (except "SS" and "ZZ", which are letters in capitals), and a letter typed
-  three times or more whose double is a word ("mmm" is "mm").
+  "celiac", "scabies", "lyssavirus", "provirus", "bobsleigh"); a word in
+  "-leigh" or in "-virus" that the dictionary and the ending rules do not
+  know; "read" after a hyphen and one of the fifteen words of the new rule;
+  the sounds "tsk", "psst", "pfft", "hmph", "psh", "pssh" in small letters or
+  in capitals; a hiss and a snore ("Sss", "Zzzz", and "Ss" or "Zz" standing
+  alone or among other sounds); and "mmm", which is the hum "mm".
 * **Figures differ** where a comma is now a decimal comma (see "Text rules"),
   where a currency sign follows the amount (it was dropped: "20 €" was
   "twenty"), where a minus stands before such an amount (it was dropped before
   a currency code), and in a range before a sign ("5-10 EUR" was "five ten
   euros").
 
+The first version of these fixes was then checked on text it had never seen:
+1,985,590 sentences of news, film reviews, tweets, Simple English Wikipedia
+and chat with an assistant, 1,322,304 forms of 440,455 words and names, and
+22,187 figures in every notation, each read by the released code and by the new
+code. That check found three mistakes, all corrected:
+
+* "ss" and "zz" had been taught as words, a hiss and a snore. But "ss" is two
+  letters far more often: "SSDs", "VHSs", "HH:mm:ss", "the ss", a variable
+  named `ss`, the German "ß". They are letters again, exactly as released, and
+  only the text rules above make a hiss or a snore.
+* A figure before a dollar sign was read as a price also at the end of a
+  formula: "$x = 2$" said "two dollars". Formulas are read as before.
+* "750 000 $" lost its thousands ("seven hundred fifty zero dollars").
+
+After the corrections 788 of the 1,985,590 sentences are read differently
+from the release, and 300 of the 1,322,304 word forms. No sentence, word or
+figure that the released code could read fails with the new code. The
+sentences by cause:
+
+| Cause | Sentences | Example |
+|---|---|---|
+| A word in "-virus" | 377 | "coronavirus": `k ɚ ɹ ˌɑː n ə v ˈaɪ ɹ ə s` became `k ɚ ɹ ˈoʊ n ə v ˌaɪ ɹ ə s` |
+| A word now taught | 174 | "Hermione", "Persephone", "tsk", "celiac", "psst", "bobsleigh" |
+| A currency sign after the amount | 64 | "12$", "27 $", "800 €", "750 000 $" |
+| A decimal comma | 62 | "9,9°C", "85,44 km²", "12,5%", "CHF 2,70 billion" |
+| A hiss, a snore, a hum | 52 | "Zzzz", "Mmm", "Sssssss" |
+| A name in "-leigh" | 48 | "Rayleigh", "Eastleigh" |
+| A taught sound written long | 7 | "Pfffft", "psssst" |
+| "read" after a hyphen | 4 | "well-read" |
+
+One of the 64 is wrong: a formula cut in two by a sentence break ends in
+"n_0=1$", with no sign before it to show a formula, and says "one dollar".
+
 ## Tests
 
-`tests/test_dizione.py` (35 tests) and `tests/data/tricky_sentences.txt`
-(188 sentences: 152 with the words they must turn into, 68 stretches of phones
+`tests/test_dizione.py` (36 tests) and `tests/data/tricky_sentences.txt`
+(203 sentences: 167 with the words they must turn into, 78 stretches of phones
 that must appear). Every bug fixed has a sentence there.
 Run them with `PYTHONPATH=src python -m unittest discover -s tests`.
 
@@ -447,8 +477,15 @@ error.
    Continental figures are read only where the form leaves no doubt. "2.500"
    is "two point five zero zero" and "1.234.567" is read like a version;
    "12,50" with no sign or unit beside it is two numbers; three decimals
-   after a comma ("1.234,567") are not joined; thousands parted by spaces or
-   apostrophes ("1 299,50", "1'299.50") are not handled.
+   after a comma ("1.234,567") are not joined. Thousands parted by spaces are
+   one number only before a currency sign ("1 299,50 €") or when they end in
+   "000"; "$10 000" and thousands parted by apostrophes ("1'299.50") are not
+   handled. "4.300 €" is "four point three zero zero euros". A decimal comma
+   is seen only next to the sign or the unit: in "1,5 to 2,5 kg" the first
+   figure is still two numbers.
+   Formulas are not understood. Dollar signs around one are dropped and the
+   rest is read sign by sign ("$x^2$" is "X two"); a formula that opens with
+   a figure is read as a price ("$3 + 5 = 8$" starts "three dollars").
 7. **Capitals decide initialisms.** "WHO" is read "who"; an unknown word of up
    to five capitals is spelled; a two-letter one the dictionary knows as a
    word is read as that word ("ET" outside a time, "CT", "PO" outside a code).
@@ -469,12 +506,20 @@ error.
     regular-expression look-behind, which the port has to replace.
 12. **Compounds and endings are conservative.** Two dictionary words of four
     letters or more ("sandpiper"); shorter halves go to the model.
-13. **Sounds people write are a short list.** "Sh", "ss", "tsk", "psst",
-    "pfft", "hmph", "psh", "zzz", "hm" and "mm" are said as sounds. "Pst",
-    "pff", "tch" and "ssh" are still named letter by letter ("PST" and "SSH"
-    mean other things in capitals). "Ew" and "ahem" are left to the model,
-    which gets them wrong. A sound with no vowel is one or two short phones;
-    how well it is spoken depends on the voice.
+13. **Sounds people write are a short list.** "Sh", "tsk", "psst", "pfft",
+    "hmph", "psh", "hm" and "mm" are said as sounds, and so are "sss" and
+    "zzz". "Ss" and "zz" are sounds only alone or among other sounds
+    ("Sh! Ss! Tsk!"): next to a word they are letters, so "Ss, he said" is a
+    hiss and "he said ss" is not. "Pst", "pff", "tch" and "ssh" are still
+    named letter by letter ("PST" and "SSH" mean other things in capitals).
+    "Ew" and "ahem" are left to the model, which gets them wrong. A sound
+    with no vowel is one or two short phones; how well it is spoken depends
+    on the voice.
+14. **Braces are always a pronunciation.** Text in braces that is not one
+    stops with an error instead of being read: "{name}", "{1, 2, 3}",
+    "\frac{1}{2}". Of 1,985,590 real sentences 1,973 had such braces: 1,435
+    of them in chat with an assistant (code, formulas), which is one chat
+    sentence in 150.
 
 ## Building
 
