@@ -480,10 +480,40 @@ nothing to pronounce. No word form changes. Of the figures, the 57 with
 In all, 4,690 of the 1,985,590 sentences and 300 of the 1,322,304 word forms
 are now read differently from the release.
 
+### Letters with full stops
+
+Three reports, 16 Nov 2026. Each form was read with a full stop, so a pause,
+inside it.
+
+| Form | Before | Now | Uses in the 1,985,590 sentences |
+|---|---|---|---|
+| The last stop left out: "U.S.A", "U.S", "a.k.a", "i.e those" | "U S", a stop, "a" | one acronym | 920 |
+| Capitals with stops and spaces: "U. S. A.", "J. R. R. Tolkien" | a stop after every letter | one acronym, as "J.R.R. Tolkien" | 1,326 |
+| Two letters before a stop: "Ph.D.", "B.Sc.", "LL.B." | "P H", a stop, "D", a stop | "P H D" | 190 |
+
+The rules are narrow on purpose:
+
+* The letter with no stop is written like the one before it, and a pair needs
+  capitals ("U.S", "T.V"). So "o.k.I think", "G.I.s" and "f.x" in code are as
+  before. "e.g" and "i.e" are the two pairs read in small letters.
+* Only single capitals one space apart are joined. One initial is as before
+  ("George W. Bush", "Plan A. It works."). A sentence that ends there still
+  ends: "the U. S. It is big."
+* A title is no part of a form: "Mr.T." is as before. All letters are named,
+  so "W.Va." is "W V A", not "West Virginia".
+
+This round changes 2,284 sentences; none fails, no word form and no figure
+changes. Two of the 8,749 dataset sentences change, both initials before a
+name ("H. C. Sirr", "F. A. McKenzie"); the tokens published with the dataset
+have the old reading for them.
+
+In all, 6,969 of the 1,985,590 sentences and 300 of the 1,322,304 word forms
+are now read differently from the release.
+
 ## Tests
 
-`tests/test_dizione.py` (43 tests) and `tests/data/tricky_sentences.txt`
-(229 sentences: 193 with the words they must turn into, 87 stretches of phones
+`tests/test_dizione.py` (46 tests) and `tests/data/tricky_sentences.txt`
+(234 sentences: 198 with the words they must turn into, 92 stretches of phones
 that must appear). Every bug fixed has a sentence there.
 Run them with `PYTHONPATH=src python -m unittest discover -s tests`.
 

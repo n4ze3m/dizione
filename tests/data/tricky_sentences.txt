@@ -141,12 +141,27 @@ SAID: the [U S] and the [U K] agreed .
 PHONES: ð ə <sp> j ˌuː ˈɛ s <sp> æ n d
 TEXT: He lives in the U.S. It is big.
 SAID: he lives in the [U S] . it is big .
+TEXT: The U.S.A is big.
+SAID: the [U S A] is big .
+PHONES: ð ə <sp> j ˌuː ˌɛ s ˈeɪ <sp> ɪ z <sp> b ˈɪ ɡ .
+TEXT: The U. S. A. is big.
+SAID: the [U S A] is big .
+PHONES: ð ə <sp> j ˌuː ˌɛ s ˈeɪ <sp> ɪ z <sp> b ˈɪ ɡ .
+TEXT: He has a Ph.D. in physics.
+SAID: he has a [P H D] in physics .
+PHONES: ɐ <sp> p ˌiː ˌeɪ tʃ d ˈiː <sp> ɪ n <sp> f ˈɪ z ɪ k s .
+TEXT: J. R. R. Tolkien and J.R.R. Tolkien wrote it.
+SAID: [J R R] tolkien and [J R R] tolkien wrote it .
+PHONES: dʒ ˌeɪ ˌɑːɹ ˈɑːɹ <sp> t ˈɔ l k ɪ ˌɛ n <sp> æ n d <sp> dʒ ˌeɪ ˌɑːɹ ˈɑːɹ <sp> t ˈɔ l k ɪ ˌɛ n
+TEXT: I live in the U.S. It is big.
+SAID: i live in the [U S] . it is big .
+PHONES: j ˌuː ˈɛ s . ɪ ɾ <sp> ɪ z <sp> b ˈɪ ɡ .
 TEXT: I work in IT at IBM.
 SAID: i work in [I T] at ibm .
 TEXT: THIS IS VERY IMPORTANT.
 SAID: this is very important .
 TEXT: H. C. Sirr wrote it.
-SAID: [H] . [C] . sirr wrote it .
+SAID: [H C] sirr wrote it .
 TEXT: COVID-19 and B2B sales at 4K.
 SAID: covid nineteen and [B] two [B] sales at four [K] .
 TEXT: Henry VIII and World War II.
@@ -413,7 +428,7 @@ SAID: father brown said it , for real .
 TEXT: We made a plan. A dog barked.
 SAID: we made a plan . a dog barked .
 TEXT: F. A. McKenzie wrote it.
-SAID: [F] . [A] . mckenzie wrote it .
+SAID: [F A] mckenzie wrote it .
 
 # ---- names and rare words the dictionary lacks or has wrong ----
 TEXT: Emmaleigh and Hermione have coeliac disease.

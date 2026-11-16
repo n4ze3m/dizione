@@ -406,6 +406,17 @@ class Normalizer:
     def __init__(self, is_word=None):
         self.is_word = is_word or (lambda word: True)
         self.abbreviations = {columns[0]: (columns[1], columns[2]) for _, columns in tables.rows("abbreviations.txt")}
+        # Letters with full stops: "U.S.", "e.g.", "U.S.A" (the last stop left out), "Ph.D." and "LL.B." (two
+        # letters before a stop, the first a capital). "Mr.", "Dr." and the like are no part of one: "Mr.T.".
+        titles = "|".join(sorted({key.capitalize() for key in (*self.abbreviations, "st", "dr") if len(key) == 2}
+                                 | {key.upper() for key in (*self.abbreviations, "st", "dr") if len(key) == 2}))
+        part = r"(?:[A-Za-z]|(?!(?:" + titles + r")\.)[A-Z][A-Za-z])\."
+        # the letter with no stop is written like the one before it: "o.k.I think" is two sentences
+        last = r"(?:(?:(?<=[a-z]\.)[a-z]|(?<=[A-Z]\.)[A-Z])(?![A-Za-z\d]))"
+        self._dotted_form = re.compile(
+            r"\b(?:(?:" + part + r"){2,}" + last + r"?"
+            r"|(?:[A-Z]|(?!(?:" + titles + r")\.)[B-DF-HJ-NP-TV-Z][b-df-hj-np-tv-z])\.[A-Z](?![A-Za-z\d])"   # U.S, Ph.D
+            r"|(?:[Ee]\.[Gg]|[Ii]\.[Ee])(?![A-Za-z\d]))")
         # A unit marked "exact" is written in one letter case only: "m" is a meter, "M" is not.
         self.units, self.exact_units = {}, {}
         for _, columns in tables.rows("units.txt"):
@@ -875,7 +886,8 @@ class Normalizer:
         return f" {_INLINE}{chr(_INLINE_BASE + len(self.inline) - 1)}{_INLINE} "
 
     def _dotted(self, match, text):
-        """``U.S.``, ``e.g.``, ``p.m.``: letters with full stops."""
+        """``U.S.``, ``e.g.``, ``p.m.``, ``Ph.D.``: letters with full stops. The
+        last stop may be missing (``U.S.A``); it is then no sentence end."""
         letters = match.group(0).replace(".", "")
         key = letters.lower()
         following = text[match.end():].lstrip()
@@ -1118,7 +1130,13 @@ class Normalizer:
                       lambda m: self._compared(m, _COMPARISONS[m.group(1)]), text)
         text = re.sub(r"(?<=\d) Ti\b", f" {_spelled('TI')}", text)              # RTX 4070 Ti
         text = re.sub(r"\b([Rr])ef\.\s?[Nn]o\.(?=\s)", r"\1eference number", text)
-        text = re.sub(r"\b((?:[A-Za-z]\.){2,})", lambda m: self._dotted(m, text), text) if "." in text else text
+        if "." in text:
+            # "U. S. A.", "J. R. R. Tolkien": capitals with full stops, one space apart, are one such form.
+            # "E. G. Marshall" is a name; "e. g." is "for example".
+            text = re.sub(r"(?<![\w.])(?:[A-Z]\.(?: [A-Z]\.)+|[Ee]\. g\.|[Ii]\. e\.)",
+                          lambda m: f" {_spelled(m.group(0)[0] + m.group(0)[3])} " if m.group(0) in ("E. G.", "I. E.")
+                          else m.group(0).replace(" ", ""), text)
+            text = self._dotted_form.sub(lambda m: self._dotted(m, text), text)
         text = re.sub(r"\b([A-Za-z]{1,6})\b(\.?)(?![A-Za-z'’])", lambda m: self._abbreviation(m, text), text)
         if re.search(r"\d", text):
             text = _GLUED.sub(self._glued, text)

@@ -291,6 +291,50 @@ class NormalizerTests(unittest.TestCase):
         mixed = normalize.tokens("Say {HH AH0 L OW1} to {name}.")
         self.assertEqual(said(mixed), "say {h ə l oʊ} to ( name ) .")
 
+    def spoken(self, cases):
+        for written, spoken in cases:
+            self.assertEqual(said(normalize.tokens(written)), spoken, written)
+
+    def test_a_dotted_acronym_may_lack_its_last_full_stop(self):
+        self.spoken((
+            ("The U.S.A is big.", "the [U S A] is big ."),
+            ("The U.S is big.", "the [U S] is big ."),
+            ("I live in the U.S.A", "i live in the [U S A]"),
+            ("The U.S.A's flag.", "the [U S A] ' [S] flag ."),
+            ("Fred, a.k.a the king", "fred , [A K A] the king"),
+            ("Fans, i.e those who stay, e.g, me.", "fans , that is those who stay , for example , me ."),
+            # not one: a sentence that starts without a space, a plural, a name in code
+            ("It was o.k.I think so.", "it was [O K] . i think so ."),
+            ("Two G.I.s came.", "two [G I] [S] came ."),
+            ("Use f.x here.", "use [F] . [X] here .")))
+
+    def test_capitals_with_full_stops_and_spaces_are_one_acronym(self):
+        self.spoken((
+            ("The U. S. A. is big.", "the [U S A] is big ."),
+            ("Washington, D. C. is a city.", "washington , [D C] is a city ."),
+            ("for instance, e. g. this", "for instance , for example this"),
+            # initials before a name, with and without spaces
+            ("J. R. R. Tolkien wrote it.", "[J R R] tolkien wrote it ."),
+            ("J.R.R. Tolkien wrote it.", "[J R R] tolkien wrote it ."),
+            ("It is by C. S. Lewis.", "it is by [C S] lewis ."),
+            ("E. G. Marshall and I. E. Smith", "[E G] marshall and [I E] smith"),
+            # a sentence that ends there still ends
+            ("I live in the U.S. It is big.", "i live in the [U S] . it is big ."),
+            ("I live in the U. S. It is big.", "i live in the [U S] . it is big ."),
+            # one letter is as before
+            ("Plan A. It works.", "plan [A] . it works ."),
+            ("George W. Bush said so.", "george [W] . bush said so .")))
+
+    def test_dotted_forms_in_mixed_case(self):
+        self.spoken((
+            ("He has a Ph.D. in physics.", "he has a [P H D] in physics ."),
+            ("She has a Ph.D in physics.", "she has a [P H D] in physics ."),
+            ("She got her Ph.D. It took years.", "she got her [P H D] . it took years ."),
+            ("B.Sc., M.Sc., Ed.D., LL.B. and PH.D. degrees", "[B S C] , [M S C] , [E D D] , [L L B] and [P H D] degrees"),
+            ("Two Ph.D.s came.", "two [P H D] [S] came ."),
+            # a title is no part of one, and a sentence that starts without a space is none
+            ("Mr.T. came. Ok.I see.", "mr . [T] . came . okay . i see .")))
+
     def test_stretched_words(self):
         self.assertEqual(normalize.Normalizer._unstretched("soooo")[0], "so")
         self.assertEqual(normalize.Normalizer._unstretched("goooood")[0], "good")
